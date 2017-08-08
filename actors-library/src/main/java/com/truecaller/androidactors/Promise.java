@@ -94,9 +94,6 @@ public abstract class Promise<R> {
         return new PromiseImpl<>(result, cleaner);
     }
 
-    /**
-     * @hide
-     */
     @NonNull
     public static <I, T extends MessageWithResult<I>, R> Promise<R> wrap(@NonNull MessageSender sender, @NonNull T message) {
         return new PromiseProxy<>(sender, message);

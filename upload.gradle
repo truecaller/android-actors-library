@@ -1,0 +1,87 @@
+/*
+ * Copyright (C) 2017 True Software Scandinavia AB
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+apply plugin: 'maven'
+apply plugin: 'signing'
+
+if (project.hasProperty('signing.keyId')) {
+    signing {
+        sign configurations.archives
+    }
+}
+
+def configurePom = { pom ->
+    pom.artifactId = project.ext.artifactId
+
+    pom.project {
+        name = project.ext.artifactName
+        packaging 'jar'
+        url 'https://github.com/truecaller/android-actors-library/'
+
+        scm {
+            connection 'scm:git:https://github.com/truecaller/android-actors-library/'
+            developerConnection 'scm:git:https://github.com/truecaller/android-actors-library/'
+            url 'https://github.com/truecaller/android-actors-library/'
+        }
+
+        licenses {
+            license {
+                name 'The Apache License, Version 2.0'
+                url 'http://www.apache.org/licenses/LICENSE-2.0.txt'
+            }
+        }
+
+        developers {
+            developer {
+                name 'True Software Scandinavia AB'
+                email 'support@truecaller.com'
+            }
+        }
+    }
+}
+
+install {
+    repositories {
+        mavenInstaller {
+            beforeDeployment { MavenDeployment deployment -> signing.signPom(deployment) }
+            configurePom(pom)
+        }
+    }
+}
+
+if (project.hasProperty('ossrh.user') && project.hasProperty('ossrh.password')) {
+
+    def login = properties['ossrh.user']
+    def password = properties['ossrh.password']
+
+    uploadArchives {
+        repositories {
+            mavenDeployer {
+                beforeDeployment { MavenDeployment deployment -> signing.signPom(deployment) }
+
+                repository(url: "https://oss.sonatype.org/service/local/staging/deploy/maven2") {
+                    authentication(userName: login, password: password)
+                }
+
+                snapshotRepository(url: "https://oss.sonatype.org/content/repositories/snapshots") {
+                    authentication(userName: login, password: password)
+                }
+
+                configurePom(pom)
+            }
+        }
+    }
+}
