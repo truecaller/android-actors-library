@@ -1,0 +1,15 @@
+language: android
+dist: trusty
+jdk: oraclejdk8
+sudo: false
+
+android:
+  components:
+    - platform-tools
+    - tools
+    - build-tools-25.0.2
+    - extra-android-m2repository
+    - extra-google-m2repository
+    - android-25
+
+script: ./gradlew test
