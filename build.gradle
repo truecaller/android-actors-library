@@ -28,33 +28,22 @@ buildscript {
 
 allprojects {
     group = 'com.truecaller'
-    version = "1.1.5${project.hasProperty("isRelease") ? '' : '-SNAPSHOT'}"
+    version = "1.1.5"
 
-    allprojects {
-
-        repositories {
-            mavenLocal()
-            maven { url "file://${System.getenv("ANDROID_HOME")}/extras/android/m2repository/" }
-            jcenter()
-            mavenCentral()
-        }
-
-        apply plugin: 'maven-publish'
-
-        publishing {
-            repositories {
-                mavenLocal()
-            }
-        }
-
-        // Workaround for http://issues.gradle.org/browse/GRADLE-1682
-        tasks.withType(Test) {
-            scanForTestClasses = false
-            include "**/*Test.class" // whatever Ant pattern matches your test class files
-        }
+    if (!project.hasProperty("IS_RELEASE_BUILD")) {
+        version = "$version-SNAPSHOT"
     }
-}
 
-task clean(type: Delete) {
-    delete rootProject.buildDir
+    repositories {
+        mavenLocal()
+        maven { url "file://${System.getenv("ANDROID_HOME")}/extras/android/m2repository/" }
+        jcenter()
+        mavenCentral()
+    }
+
+    // Workaround for http://issues.gradle.org/browse/GRADLE-1682
+    tasks.withType(Test) {
+        scanForTestClasses = false
+        include "**/*Test.class" // whatever Ant pattern matches your test class files
+    }
 }
