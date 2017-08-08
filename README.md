@@ -1,7 +1,7 @@
-True Android Actors Library
+Android Actors Library
 =======================
 
-True Android Actors Library was inspired by the [Actor model](https://en.wikipedia.org/wiki/Actor_model), but in fact, it has nothing in common with it. The main purpose of this library is to help developers in creating a worker attached to a thread and make all interactions with this worker natural and simple.
+Android Actors Library was inspired by the [Actor model](https://en.wikipedia.org/wiki/Actor_model), but in fact, it has nothing in common with it. The main purpose of this library is to help developers in creating a worker attached to a thread and make all interactions with this worker natural and simple.
 
 ## How to use the library
 
