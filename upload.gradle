@@ -30,6 +30,7 @@ def configurePom = { pom ->
         name = project.ext.artifactName
         packaging 'jar'
         url 'https://github.com/truecaller/android-actors-library/'
+        description 'Android Actors Library was inspired by the Actor model. The main purpose of this library is to help developers in creating a worker attached to a thread and make all interactions with this worker natural and simple.'
 
         scm {
             connection 'scm:git:https://github.com/truecaller/android-actors-library/'
@@ -56,7 +57,9 @@ def configurePom = { pom ->
 install {
     repositories {
         mavenInstaller {
-            beforeDeployment { MavenDeployment deployment -> signing.signPom(deployment) }
+            if (project.hasProperty('signing.keyId')) {
+                beforeDeployment { MavenDeployment deployment -> signing.signPom(deployment) }
+            }
             configurePom(pom)
         }
     }
