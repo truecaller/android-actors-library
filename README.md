@@ -168,7 +168,7 @@ class MainActivity extends Activity {
         if (user == null) {
             showEmptyView();
         } else {
-            updateViews(result);
+            updateViews(user);
         }
     }
 }
@@ -213,7 +213,7 @@ class MainActivity extends Activity {
         if (user == null) {
             showEmptyView();
         } else {
-            updateViews(result);
+            updateViews(user);
         }
         
         mUserHandle = null;
