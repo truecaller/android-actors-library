@@ -1,5 +1,6 @@
 Android Actors Library
 =======================
+![license](https://img.shields.io/github/license/truecaller/android-actors-library.svg?colorB=388e3c) ![Maven Central](https://img.shields.io/maven-central/v/com.truecaller/android-actors-library.svg?colorB=5c6bc0)
 
 Android Actors Library was inspired by the [Actor model](https://en.wikipedia.org/wiki/Actor_model), but in fact, it has nothing in common with it. The main purpose of this library is to help developers in creating a worker attached to a thread and make all interactions with this worker natural and simple.
 
