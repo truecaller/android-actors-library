@@ -140,6 +140,10 @@ public class ActorService extends Service {
     public void onDestroy() {
         super.onDestroy();
 
+        final Binder binder = mBinder;
+        if (binder != null) {
+            binder.attachInterface(null, null);
+        }
         mThread.quit();
     }
 
