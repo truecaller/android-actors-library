@@ -26,12 +26,10 @@ public class ActorMethodInvokeExceptionTest {
         Message message = Mockito.mock(Message.class);
         //noinspection ResultOfMethodCallIgnored
         Mockito.doReturn("MESSAGE DESCRIPTION").when(message).toString();
-        ActorMethodInvokeException exception = new ActorMethodInvokeException();
-        exception.setMessage(this.getClass(), message);
+        ActorInvokeException exception = new ActorInvokeException("EXCEPTION TEST:");
+        exception.setMethodSignature(this.getClass(), message);
         String exceptionMessage = exception.getMessage();
-        // Class name and message representation should be part of exception description
-        Assert.assertNotEquals(-1, exceptionMessage.indexOf(getClass().getSimpleName()));
-        Assert.assertNotEquals(-1, exceptionMessage.indexOf("MESSAGE DESCRIPTION"));
+        Assert.assertEquals("EXCEPTION TEST: " + getClass().getSimpleName() + "MESSAGE DESCRIPTION", exceptionMessage);
     }
 
     @Test

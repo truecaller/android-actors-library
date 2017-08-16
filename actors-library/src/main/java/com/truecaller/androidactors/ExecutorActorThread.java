@@ -115,7 +115,7 @@ import java.util.concurrent.Executor;
             try {
                 message.invoke(impl);
             } catch (Throwable e) {
-                ActorMethodInvokeException call = message.exception();
+                ActorInvokeException call = message.exception();
                 call.initCause(e);
                 failureHandler.onUncaughtException(impl, message, call);
             } finally {
@@ -124,7 +124,7 @@ import java.util.concurrent.Executor;
         }
 
         @NonNull
-        /* package */ static <T> DeliverRunnable obtain(@NonNull T impl, @NonNull Message<T> message,
+        /* package */ static <T, R> DeliverRunnable obtain(@NonNull T impl, @NonNull Message<T, R> message,
                                                     @NonNull FailureHandler failureHandler) {
             DeliverRunnable runnable = obtain();
             runnable.failureHandler = failureHandler;

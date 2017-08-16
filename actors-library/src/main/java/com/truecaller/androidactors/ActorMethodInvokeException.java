@@ -16,28 +16,9 @@
 
 package com.truecaller.androidactors;
 
-import android.support.annotation.NonNull;
-import android.support.annotation.Nullable;
-
-public class ActorMethodInvokeException extends RuntimeException {
-
-    @Nullable
-    private String mMessage = null;
+public class ActorMethodInvokeException extends ActorInvokeException {
 
     public ActorMethodInvokeException() {
-        super();
-    }
-
-    /* package */ void setMessage(@NonNull Class cls, @NonNull Message<?> message) {
-        mMessage = "uncaught exception from " + cls.getSimpleName() + message;
-    }
-
-    @Override
-    public String getMessage() {
-        if (mMessage != null) {
-            return mMessage;
-        }
-
-        return super.getMessage();
+        super("uncaught exception from");
     }
 }

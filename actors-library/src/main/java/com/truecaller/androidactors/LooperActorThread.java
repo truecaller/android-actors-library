@@ -70,11 +70,11 @@ import android.support.annotation.NonNull;
         @SuppressWarnings("unchecked")
         @Override
         public void handleMessage(@NonNull android.os.Message msg) {
-            Message<T> message = (Message<T>) msg.obj;
+            Message<T, ?> message = (Message<T, ?>) msg.obj;
             try {
                 message.invoke(mImpl);
             } catch (Throwable e) {
-                ActorMethodInvokeException call = message.exception();
+                ActorInvokeException call = message.exception();
                 call.initCause(e);
                 mFailureHandler.onUncaughtException(mImpl, message, call);
             }

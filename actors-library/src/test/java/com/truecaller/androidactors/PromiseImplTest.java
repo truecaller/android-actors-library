@@ -16,12 +16,18 @@
 
 package com.truecaller.androidactors;
 
+import android.support.annotation.NonNull;
+import android.support.annotation.Nullable;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
+import org.mockito.ArgumentCaptor;
+import org.mockito.Captor;
 import org.mockito.Mock;
 import org.mockito.Mockito;
 import org.mockito.MockitoAnnotations;
+import org.mockito.invocation.InvocationOnMock;
+import org.mockito.stubbing.Answer;
 
 
 public class PromiseImplTest {
@@ -35,87 +41,143 @@ public class PromiseImplTest {
     private ActorThread mActorThread;
 
     @Mock
-    private ResultListenerContainer mListenerContainer;
+    private ResultListener<Object> mListener;
+
+    @Mock
+    private ResultListener<Object> mProxy;
+
+    private ActorRef<ResultListener<Object>> mActorRef = new ActorRef<ResultListener<Object>>() {
+        @Override
+        public ResultListener<Object> tell() {
+            return mProxy;
+        }
+    };
+
+    @Captor
+    private ArgumentCaptor<ResultListener<Object>> mCaptor;
 
     @Before
     public void setUp() {
         MockitoAnnotations.initMocks(this);
+        Mockito.doReturn(mActorRef).when(mActorThread).bind(Mockito.same(ResultListener.class), Mockito.<ResultListener>any());
     }
 
-    @Test(expected = AssertionError.class)
-    public void thenNothingTest() {
+    @Test
+    public void forget_cleanRefs_always() throws Exception {
+        PromiseImpl<Object> promise = new PromiseImpl<>(mResult, mCleaner);
+        promise.forget();
+
+        Mockito.verify(mCleaner).clean(mResult);
+    }
+
+    @Test
+    public void thenNothing_forgetResult_Always() throws Exception {
         PromiseImpl<Object> promise = new PromiseImpl<>(mResult, mCleaner);
         promise.thenNothing();
-    }
-
-    @Test(expected = AssertionError.class)
-    public void thenSameThreadTest() {
-        PromiseImpl<Object> promise = new PromiseImpl<>(mResult, mCleaner);
-        //noinspection unchecked
-        promise.then(Mockito.mock(ResultListener.class));
-    }
-
-    @Test(expected = AssertionError.class)
-    public void thenActorThreadTest() {
-        PromiseImpl<Object> promise = new PromiseImpl<>(mResult, mCleaner);
-        //noinspection unchecked
-        promise.then(mActorThread, Mockito.mock(ResultListener.class));
-    }
-
-    @Test
-    public void forgetTest() {
-        PromiseImpl<Object> promise = new PromiseImpl<>(mResult, mCleaner);
-        // Should clean result and links
-        promise.forget();
-        // Check that result was cleaned
-        Mockito.verify(mCleaner).clean(mResult);
-        // The only way to check that link was cleaned - call forget once again and check cleaner calls
-        Mockito.<ResourceCleaner>reset(mCleaner);
-        promise.forget();
-        Mockito.verifyZeroInteractions(mCleaner);
-
-        // Check that we will not call cleaner with null result
-        promise = new PromiseImpl<>(null, mCleaner);
-        promise.forget();
-        Mockito.verifyZeroInteractions(mCleaner);
-    }
-
-    @Test
-    public void getTest() throws Exception {
-        PromiseImpl<Object> promise = new PromiseImpl<>(mResult, mCleaner);
-        // First get attempt should clean result
-        Assert.assertSame(mResult, promise.get());
-        // So second one will return null
+        // By now it is the only way to get result
         Assert.assertNull(promise.get());
     }
 
-    @SuppressWarnings("unchecked")
     @Test
-    public void testDeliver() {
+    public void then_callListenerOnCurrentThread_withListener() throws Exception {
         PromiseImpl<Object> promise = new PromiseImpl<>(mResult, mCleaner);
-        promise.deliver(mListenerContainer);
-        Mockito.verify(mListenerContainer).deliverResult(mResult, mCleaner);
-        // Links to result and cleaner should be cleaned, but the only way to get it - call deliver second time
-        // it will trigger deliverResult with nulls
-        promise.deliver(mListenerContainer);
-        Mockito.verify(mListenerContainer).deliverResult(null, null);
+        promise.then(mListener);
+        Mockito.verify(mListener).onResult(mResult);
     }
 
-    @SuppressWarnings("unchecked")
     @Test
-    public void testDeliverOnThread() {
-        ActorRef<ResultListenerContainer> ref = Mockito.mock(ActorRef.class);
+    public void then_cleanResultOnSameThread_withoutThreadAndListener() throws Exception {
+        PromiseImpl<Object> promise = new PromiseImpl<>(mResult, mCleaner);
+        promise.then(null);
+        Mockito.verify(mCleaner).clean(mResult);
+    }
 
-        Mockito.doReturn(ref).when(mActorThread).bind(ResultListenerContainer.class, mListenerContainer);
-        Mockito.doReturn(mListenerContainer).when(ref).tell();
+    @Test
+    public void then_doNothing_withoutListenerAndResult() throws Exception {
+        PromiseImpl<Object> promise = new PromiseImpl<>(null, mCleaner);
+        promise.then(null);
+        Mockito.verifyZeroInteractions(mCleaner);
+    }
+
+    @Test
+    public void then_doNothing_withoutListenerResultAndCleaner() throws Exception {
+        PromiseImpl<Object> promise = new PromiseImpl<>(null, null);
+        promise.then(null);
+        // Just do not crash
+    }
+
+    @Test
+    public void then_cleanResultOnSameThread_withoutListener() throws Exception {
+        PromiseImpl<Object> promise = new PromiseImpl<>(mResult, mCleaner);
+        promise.then(mActorThread, null);
+        Mockito.verifyZeroInteractions(mActorThread);
+        Mockito.verify(mCleaner).clean(mResult);
+    }
+
+    @Test
+    public void then_callListenerOnActorThread_withListener() throws Exception {
+        PromiseImpl<Object> promise = new PromiseImpl<>(mResult, mCleaner);
+        promise.then(mActorThread, mListener);
+
+        Mockito.verify(mActorThread).bind(Mockito.same(ResultListener.class), mCaptor.capture());
+        Mockito.verify(mProxy).onResult(mResult);
+
+        mCaptor.getValue().onResult(mResult);
+        Mockito.verify(mListener).onResult(mResult);
+    }
+
+    @Test
+    public void then_cleanResultOnActorThread_withoutListener() throws Exception {
+        Mockito.doThrow(new ResultListenerIsNotSpecifiedException()).when(mListener).onResult(Mockito.any());
 
         PromiseImpl<Object> promise = new PromiseImpl<>(mResult, mCleaner);
-        promise.deliver(mActorThread, mListenerContainer);
+        promise.then(mActorThread, mListener);
 
-        Mockito.verify(mListenerContainer).deliverResult(mResult, mCleaner);
-        // Links to result and cleaner should be cleaned, but the only way to get it - call deliver second time
-        // it will trigger deliverResult with nulls
-        promise.deliver(mListenerContainer);
-        Mockito.verify(mListenerContainer).deliverResult(null, null);
+        Mockito.verify(mActorThread).bind(Mockito.same(ResultListener.class), mCaptor.capture());
+        Mockito.verify(mProxy).onResult(mResult);
+
+        mCaptor.getValue().onResult(mResult);
+        Mockito.verify(mCleaner).clean(mResult);
+    }
+
+    @Test
+    public void then_doNothingOnActorThread_withoutListenerAndResult() throws Exception {
+        Mockito.doThrow(new ResultListenerIsNotSpecifiedException()).when(mListener).onResult(Mockito.any());
+
+        PromiseImpl<Object> promise = new PromiseImpl<>(null, mCleaner);
+        promise.then(mActorThread, mListener);
+
+        Mockito.verify(mActorThread).bind(Mockito.same(ResultListener.class), mCaptor.capture());
+        Mockito.verify(mProxy).onResult(null);
+
+        mCaptor.getValue().onResult(null);
+        Mockito.verifyZeroInteractions(mCleaner);
+    }
+
+    @Test
+    public void ResultListener_cleanOnActorThread_forget() {
+        PromiseImpl<Object> promise = new PromiseImpl<>(mResult, mCleaner);
+        ActionHandle handle = promise.then(mActorThread, mListener);
+
+        Mockito.verify(mActorThread).bind(Mockito.same(ResultListener.class), mCaptor.capture());
+
+        handle.forget();
+
+        Mockito.verify(mProxy).onResult(mResult);
+
+        mCaptor.getValue().onResult(mResult);
+        Mockito.verify(mCleaner).clean(mResult);
+    }
+
+    @Test
+    public void ResultListener_nonNull_exception() {
+        PromiseImpl<Object> promise = new PromiseImpl<>(mResult, mCleaner);
+        promise.then(mActorThread, mListener);
+
+        Mockito.verify(mActorThread).bind(Mockito.same(ResultListener.class), mCaptor.capture());
+
+        ResultListener listener = mCaptor.getValue();
+        Assert.assertTrue(listener instanceof ExceptionTemplateProvider);
+        Assert.assertNotNull(((ExceptionTemplateProvider) listener).exception());
     }
 }

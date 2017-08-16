@@ -17,30 +17,29 @@
 package com.truecaller.androidactors;
 
 import android.support.annotation.NonNull;
-import android.support.annotation.Nullable;
 
-/* package */ class ResultListenerContainerMessage implements Message<ResultListenerContainer> {
+public abstract class MessageBase<T, R> implements Message<T, R> {
 
-    @Nullable
-    private final Object mResult;
+    @NonNull
+    /* package */ ActorInvokeException mExceptionTemplate;
 
-    @Nullable
-    private final ResourceCleaner mCleaner;
-
-    /* package */ ResultListenerContainerMessage(@Nullable Object result, @Nullable ResourceCleaner cleaner) {
-        mResult = result;
-        mCleaner = cleaner;
+    protected MessageBase(@NonNull ActorInvokeException exception) {
+        mExceptionTemplate = exception;
     }
 
-    @Override
-    public void invoke(ResultListenerContainer target) {
-        //noinspection unchecked
-        target.deliverResult(mResult, mCleaner);
+    protected Promise<R> verifyResult(Promise<R> result) {
+        if (result == null) {
+            AssertionError exception = new AssertionError("Actor methods are not allowed to return null");
+            //noinspection UnnecessaryInitCause, have to support Java 1.6
+            exception.initCause(mExceptionTemplate);
+            throw exception;
+        }
+        return result;
     }
 
     @NonNull
     @Override
-    public ActorMethodInvokeException exception() {
-        return new ActorMethodInvokeException();
+    public ActorInvokeException exception() {
+        return mExceptionTemplate;
     }
 }

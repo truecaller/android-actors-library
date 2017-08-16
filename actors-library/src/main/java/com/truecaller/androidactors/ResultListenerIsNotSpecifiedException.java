@@ -16,9 +16,5 @@
 
 package com.truecaller.androidactors;
 
-import android.support.annotation.NonNull;
-
-public interface MessageWithResult<T> {
-    <R> void invoke(T target, Promise.Dispatcher<R> sender);
-    @NonNull ActorMethodInvokeException exception();
+/* package */ class ResultListenerIsNotSpecifiedException extends RuntimeException {
 }

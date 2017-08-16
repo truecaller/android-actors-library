@@ -16,18 +16,8 @@
 
 package com.truecaller.androidactors;
 
-import android.support.annotation.Nullable;
-
-/* package */ class ResultListenerContainerProxy implements ResultListenerContainer {
-
-    private final MessageSender mMessageSender;
-
-    /* package */ ResultListenerContainerProxy(MessageSender messageSender) {
-        mMessageSender = messageSender;
-    }
-
-    @Override
-    public void deliverResult(@Nullable Object result, @Nullable ResourceCleaner cleaner) {
-        mMessageSender.deliver(new ResultListenerContainerMessage(result, cleaner));
+/* package */ class ActorCallbackInvokeException extends ActorInvokeException {
+    ActorCallbackInvokeException() {
+        super("uncaught exception when delivering result from");
     }
 }

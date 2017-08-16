@@ -193,7 +193,7 @@ public class ActorService extends Service {
                 try {
                     transaction.message.invoke(transaction.impl);
                 } catch (Throwable e) {
-                    ActorMethodInvokeException call = transaction.message.exception();
+                    ActorInvokeException call = transaction.message.exception();
                     call.initCause(e);
                     transaction.failureHandler.onUncaughtException(transaction.impl, transaction.message, call);
                 }
@@ -289,7 +289,7 @@ public class ActorService extends Service {
         }
 
         @NonNull
-        /* package */ static <T> Transaction obtain(@NonNull T impl, @NonNull Message<T> message,
+        /* package */ static <T> Transaction obtain(@NonNull T impl, @NonNull Message<T, ?> message,
                                                     @NonNull FailureHandler failureHandler) {
             Transaction transaction = obtain();
             transaction.impl = impl;
