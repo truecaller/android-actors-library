@@ -16,8 +16,6 @@
 
 package com.truecaller.androidactors;
 
-import android.support.annotation.NonNull;
-import android.support.annotation.Nullable;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
@@ -26,8 +24,6 @@ import org.mockito.Captor;
 import org.mockito.Mock;
 import org.mockito.Mockito;
 import org.mockito.MockitoAnnotations;
-import org.mockito.invocation.InvocationOnMock;
-import org.mockito.stubbing.Answer;
 
 
 public class PromiseImplTest {

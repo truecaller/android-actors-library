@@ -20,16 +20,18 @@ import android.content.Context;
 import android.database.sqlite.SQLiteOpenHelper;
 import android.support.annotation.NonNull;
 import android.util.Log;
+
 import com.truecaller.androidactors.ActorRef;
 import com.truecaller.androidactors.ActorThread;
 import com.truecaller.androidactors.ActorsThreads;
+
+import javax.inject.Named;
+import javax.inject.Singleton;
+
 import dagger.Module;
 import dagger.Provides;
 import okhttp3.OkHttpClient;
 import okhttp3.logging.HttpLoggingInterceptor;
-
-import javax.inject.Named;
-import javax.inject.Singleton;
 
 @Module
 public class AppModule {
@@ -86,8 +88,8 @@ public class AppModule {
     @Provides
     @Named(THREAD_NETWORK)
     @NonNull
-    /* package */ ActorThread provideNetworkThread(@NonNull ActorsThreads actors) {
-        return actors.createPooledThread("network", 5);
+    /* package */ ActorThread provideNetworkThread(@NonNull Context context, @NonNull ActorsThreads actors) {
+        return actors.createThread(context, NetworkService.class);
     }
 
     @Singleton
@@ -116,7 +118,7 @@ public class AppModule {
     @Named(THREAD_DB)
     @NonNull
     /* package */ ActorThread databaseThread(@NonNull ActorsThreads actors) {
-        return actors.createThread("db-worker");
+        return actors.createThread(THREAD_DB);
     }
 
     @Singleton
