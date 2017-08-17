@@ -77,7 +77,7 @@ public class ActorService extends Service {
      */
     @SuppressWarnings({"unused", "WeakerAccess"})
     protected ActorService(@NonNull String name) {
-        this(name, TimeUnit.MINUTES.toMillis(5), false);
+        this(name, 0, false);
     }
 
     /**
