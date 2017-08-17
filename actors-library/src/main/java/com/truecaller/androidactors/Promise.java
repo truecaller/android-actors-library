@@ -92,6 +92,18 @@ public abstract class Promise<R> {
         return new PromiseImpl<>(result, cleaner);
     }
 
+    /**
+     * For tests only. Create special promise for using in tests. For detauls see {@link TestPromise}
+     *
+     * @param result desired result
+     * @param <R>
+     * @return Valid promise for using in tests
+     */
+    @NonNull
+    public static <R> TestPromise<R> test(@Nullable R result) {
+        return new TestPromise<>(result);
+    }
+
     @NonNull
     public static <I, R, T extends Message<I, R>> Promise<R> wrap(@NonNull MessageSender sender, @NonNull T message) {
         return new PromiseProxy<>(sender, message);
