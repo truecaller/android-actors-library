@@ -42,13 +42,8 @@ import java.util.Set;
     @NotNull
     private final JCodeModel mModel;
 
-    @NotNull
-    private final TypeUtils mTypeUtils;
-
-    /* package */ ActorBuilderGenerator(@NotNull JCodeModel model,
-                                        @NotNull TypeUtils typeUtils) {
+    /* package */ ActorBuilderGenerator(@NotNull JCodeModel model) {
         mModel = model;
-        mTypeUtils = typeUtils;
     }
 
     /*package */ boolean generate(@NotNull PackageElement pckg,

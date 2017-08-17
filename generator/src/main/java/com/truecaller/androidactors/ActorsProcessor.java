@@ -75,7 +75,7 @@ public class ActorsProcessor extends AbstractProcessor {
             final Set<? extends Element> elements = roundEnv.getElementsAnnotatedWith(ActorInterface.class);
             final TypeUtils typeUtils = new TypeUtils(model);
             final ProxyMessageGenerator messageGenerator = new ProxyMessageGenerator(model, typeUtils);
-            final ActorBuilderGenerator actorBuilderGenerator = new ActorBuilderGenerator(model, typeUtils);
+            final ActorBuilderGenerator actorBuilderGenerator = new ActorBuilderGenerator(model);
 
             if (elements == null || elements.isEmpty()) {
                 return true;

@@ -88,7 +88,7 @@ public class ActorServiceTest {
         // Should wait for a while before stopping self
         Assert.assertFalse(mShadowService.isStoppedBySelf());
 
-        // Execute next message. No we should take a poison pill and stop self.
+        // Execute next message. Now we should take a poison pill and stop self.
         shadowLooper.runOneTask();
         Assert.assertTrue(mShadowService.isStoppedBySelf());
 
@@ -130,7 +130,7 @@ public class ActorServiceTest {
         // Should wait for a while before stopping self
         Assert.assertFalse(mShadowService.isStoppedBySelf());
 
-        // Execute next message. No we should take a poison pill and stop self.
+        // Execute next message. Now we should take a poison pill and stop self.
         shadowLooper.runOneTask();
         Assert.assertTrue(mShadowService.isStoppedBySelf());
     }
@@ -164,7 +164,7 @@ public class ActorServiceTest {
         // Should wait for a while before stopping self
         Assert.assertFalse(mShadowService.isStoppedBySelf());
 
-        // Execute next message. No we should take a poison pill and stop self.
+        // Execute next message. Now we should take a poison pill and stop self.
         shadowLooper.runOneTask();
         Assert.assertTrue(mShadowService.isStoppedBySelf());
     }
