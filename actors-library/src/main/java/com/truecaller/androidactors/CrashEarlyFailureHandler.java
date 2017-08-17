@@ -25,8 +25,10 @@ public class CrashEarlyFailureHandler implements FailureHandler {
     }
 
     @Override
-    public <A> void onUncaughtException(@NonNull A actor, @NonNull Message<A> message, @NonNull ActorMethodInvokeException exception) {
-        exception.setMessage(actor.getClass(), message);
+    public <A, R> void onUncaughtException(@NonNull A actor,
+                                           @NonNull Message<A, R> message,
+                                           @NonNull ActorInvokeException exception) {
+        exception.setMethodSignature(actor.getClass(), message);
         throw exception;
     }
 }

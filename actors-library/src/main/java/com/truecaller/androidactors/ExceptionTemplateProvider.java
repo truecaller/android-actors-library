@@ -16,8 +16,14 @@
 
 package com.truecaller.androidactors;
 
-import android.support.annotation.Nullable;
+import android.support.annotation.NonNull;
 
-/* package */ interface ResultListenerContainer<T> {
-    void deliverResult(@Nullable T result, @Nullable ResourceCleaner<T> cleaner);
+/* package */ interface ExceptionTemplateProvider {
+    /**
+     * Return prepared exception object which already has knowledge from what actor method it was invoked.
+     * Can be useful for debug purposes.
+     * @return prepared exception object
+     */
+    @NonNull
+    ActorInvokeException exception();
 }

@@ -54,7 +54,7 @@ public class CrashEarlyFailureHandlerTest {
             thrown = true;
             Assert.assertSame(mThrowable, e);
         }
-        Mockito.verify(mThrowable).setMessage(mImpl.getClass(), mMessage);
+        Mockito.verify(mThrowable).setMethodSignature(mImpl.getClass(), mMessage);
         Assert.assertTrue(thrown);
     }
 }

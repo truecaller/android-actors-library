@@ -26,8 +26,8 @@ public abstract class ProxyFactoryBase implements ProxyFactory {
     @SuppressWarnings("unchecked")
     @NonNull
     protected <T> T defaultProxy(@NonNull Class<T> cls, @NonNull MessageSender sender) {
-        if (ResultListenerContainer.class.equals(cls)) {
-            return (T) new ResultListenerContainerProxy(sender);
+        if (ResultListener.class.equals(cls)) {
+            return (T) new ResultListenerProxy(sender);
         }
 
         throw new IllegalArgumentException("Proxy for class " + cls.getCanonicalName() + " was not generated. " +

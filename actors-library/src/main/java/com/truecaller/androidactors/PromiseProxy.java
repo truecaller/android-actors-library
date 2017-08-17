@@ -19,20 +19,20 @@ package com.truecaller.androidactors;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 
-/* package */ class PromiseProxy<T, R> extends Promise<R> implements Message<T>, ActionHandle, ResultListenerContainer<R>, Promise.Dispatcher<R> {
+/* package */ class PromiseProxy<T, R> extends Promise<R> implements Message<T, R>, ActionHandle, ResultListener<R> {
     @NonNull
     private final MessageSender mSender;
 
     @NonNull
-    private final MessageWithResult<T> mMessage;
+    private final Message<T, R> mMessage;
 
     @Nullable
-    private volatile ActorThread mActorThread = null;
+    private ActorThread mActorThread = null;
 
     @Nullable
     private volatile ResultListener<R> mListener = null;
 
-    /* package */ PromiseProxy(@NonNull MessageSender sender, @NonNull MessageWithResult<T> message) {
+    /* package */ PromiseProxy(@NonNull MessageSender sender, @NonNull Message<T, R> message) {
         mSender = sender;
         mMessage = message;
     }
@@ -69,29 +69,12 @@ import android.support.annotation.Nullable;
     }
 
     @Override
-    public void dispatch(@NonNull Promise<R> promise) {
-        ActorThread thread = mActorThread;
-        mActorThread = null;
-
-        if (thread != null) {
-            //noinspection ConstantConditions
-            promise.deliver(thread, this);
-        } else {
-            //noinspection ConstantConditions
-            promise.deliver(this);
-        }
-    }
-
-    @Override
-    public void deliverResult(@Nullable R result, @Nullable ResourceCleaner<R> cleaner) {
+    public void onResult(@Nullable R result) {
         final ResultListener<R> listener = mListener;
         mListener = null;
 
         if (listener == null) {
-            if (cleaner != null && result != null) {
-                cleaner.clean(result);
-            }
-            return;
+            throw new ResultListenerIsNotSpecifiedException();
         }
 
         listener.onResult(result);
@@ -103,29 +86,32 @@ import android.support.annotation.Nullable;
     }
 
     @Override
-    public void invoke(T impl) {
-        mMessage.invoke(impl, this);
+    public Promise<R> invoke(@NonNull T impl) {
+        Promise<R> result = mMessage.invoke(impl);
+        if (result != null) {
+            ResultListener<R> listener = mListener;
+
+            if (listener != null && mActorThread != null) {
+                result.then(mActorThread, this);
+            } else {
+                mListener = null;
+                //noinspection ConstantConditions
+                result.then(listener);
+            }
+        }
+        mActorThread = null;
+        return null;
     }
 
     @NonNull
     @Override
-    public ActorMethodInvokeException exception() {
+    public ActorInvokeException exception() {
         return mMessage.exception();
     }
 
     @Override
     public String toString() {
         return mMessage.toString();
-    }
-
-    @Override
-    void deliver(@NonNull ResultListenerContainer<R> container) {
-        throw new AssertionError("Should never be called");
-    }
-
-    @Override
-    void deliver(@NonNull ActorThread thread, @NonNull ResultListenerContainer<R> container) {
-        throw new AssertionError("Should never be called");
     }
 
     /* package */ static class BlockResultListener<R> implements ResultListener<R> {

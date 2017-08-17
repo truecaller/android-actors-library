@@ -69,7 +69,6 @@ public class AppModule {
         return new FeedParser();
     }
 
-    @Singleton
     @Provides
     @NonNull
     /* package */ NetworkManager provideNetworkManager(@NonNull OkHttpClient httpClient, @NonNull FeedParser feedParser) {
@@ -107,7 +106,6 @@ public class AppModule {
     }
 
     @NonNull
-    @Singleton
     @Provides
     /* package */ FeedStorage provideFeedStorage(@NonNull Context context, @NonNull SQLiteOpenHelper helper) {
         return new FeedStorageImpl(context.getContentResolver(), helper);
@@ -121,6 +119,7 @@ public class AppModule {
         return actors.createThread("db-worker");
     }
 
+    @Singleton
     @NonNull
     @Provides
     /* package */ ActorRef<FeedStorage> provideFeedStorageRef(@NonNull @Named(THREAD_DB) ActorThread thread,

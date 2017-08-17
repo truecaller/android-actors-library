@@ -30,8 +30,8 @@ public class ProxyFactoryBaseTest {
     @Test
     public void listenerContainerTest() {
         ProxyFactoryBase factoryBase = Mockito.mock(ProxyFactoryBase.class, Mockito.CALLS_REAL_METHODS);
-        ResultListenerContainer proxy = factoryBase.defaultProxy(ResultListenerContainer.class, Mockito.mock(MessageSender.class));
+        ResultListener proxy = factoryBase.defaultProxy(ResultListener.class, Mockito.mock(MessageSender.class));
         Assert.assertNotNull(proxy);
-        Assert.assertTrue(proxy instanceof ResultListenerContainerProxy);
+        Assert.assertTrue(proxy instanceof ResultListenerProxy);
     }
 }

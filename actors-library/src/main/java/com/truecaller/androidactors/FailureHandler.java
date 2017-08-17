@@ -23,5 +23,5 @@ import android.support.annotation.NonNull;
  */
 @SuppressWarnings("WeakerAccess")
 public interface FailureHandler {
-    <A> void onUncaughtException(@NonNull A actor, @NonNull Message<A> message, @NonNull ActorMethodInvokeException exception);
+    <A, R> void onUncaughtException(@NonNull A actor, @NonNull Message<A, R> message, @NonNull ActorInvokeException exception);
 }

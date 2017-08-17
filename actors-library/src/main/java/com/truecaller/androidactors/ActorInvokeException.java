@@ -19,16 +19,28 @@ package com.truecaller.androidactors;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 
-/**
- * Message to actor. You don't need to create classes that implements this interface manually.
- * @param <T> actor interface
- */
-@SuppressWarnings("WeakerAccess")
-public interface Message<T, R> extends ExceptionTemplateProvider {
-    /**
-     * Invoke the method which is represented by this message on the actor instance
-     * @param target actor instance
-     */
+/* package */ class ActorInvokeException extends RuntimeException {
+
+    @NonNull
+    private final String mCallDescription;
+
     @Nullable
-    Promise<R> invoke(@NonNull T target);
+    private String mMessage = null;
+
+    /* package */ ActorInvokeException(@NonNull String callDescription) {
+        mCallDescription = callDescription;
+    }
+
+    /* package */ void setMethodSignature(@NonNull Class cls, @NonNull Message<?,?> message) {
+        mMessage = mCallDescription + " " + cls.getSimpleName() + message;
+    }
+
+    @Override
+    public String getMessage() {
+        if (mMessage != null) {
+            return mMessage;
+        }
+
+        return super.getMessage();
+    }
 }

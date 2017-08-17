@@ -49,6 +49,7 @@ import javax.lang.model.type.TypeMirror;
 import javax.tools.Diagnostic.Kind;
 import java.io.IOException;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
 
 @SupportedAnnotationTypes(value = {"com.truecaller.androidactors.ActorInterface", "com.truecaller.androidactors.ActorsPackage"})
@@ -173,7 +174,20 @@ public class ActorsProcessor extends AbstractProcessor {
                 }
             }
 
-            final JClass message = messageGenerator.generateMessage(className, actorClass, method, hasResult);
+            JClass promised = null;
+            if (hasResult) {
+                List<JClass> typeParams = ((JClass) returnType).getTypeParameters();
+                if (typeParams.size() == 0) {
+                    processingEnv.getMessager().printMessage(Kind.ERROR, "Specify promised type", method);
+                    return null;
+                } else if (typeParams.size() > 1) {
+                    processingEnv.getMessager().printMessage(Kind.ERROR, "Unexpected promise specialization", method);
+                    return null;
+                }
+                promised = typeParams.get(0);
+            }
+
+            final JClass message = messageGenerator.generateMessage(className, actorClass, method, promised);
             final JMethod mth = cls.method(JMod.PUBLIC | JMod.FINAL, returnType, method.getSimpleName().toString());
             mth.annotate(Override.class);
             if (returnType != model.VOID) {

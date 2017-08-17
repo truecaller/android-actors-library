@@ -17,6 +17,7 @@
 package com.truecaller.androidactors;
 
 import android.support.annotation.NonNull;
+import android.support.annotation.Nullable;
 import com.sun.codemodel.ClassType;
 import com.sun.codemodel.JClass;
 import com.sun.codemodel.JClassAlreadyExistsException;
@@ -24,13 +25,11 @@ import com.sun.codemodel.JCodeModel;
 import com.sun.codemodel.JDefinedClass;
 import com.sun.codemodel.JExpr;
 import com.sun.codemodel.JExpression;
-import com.sun.codemodel.JFieldVar;
 import com.sun.codemodel.JInvocation;
 import com.sun.codemodel.JMethod;
 import com.sun.codemodel.JMod;
 import com.sun.codemodel.JOp;
 import com.sun.codemodel.JType;
-import com.sun.codemodel.JTypeVar;
 import com.sun.codemodel.JVar;
 import org.apache.commons.lang3.StringUtils;
 import org.jetbrains.annotations.NotNull;
@@ -55,7 +54,7 @@ import java.util.List;
 
     /* package */ JClass generateMessage(@NotNull String proxyQualifiedName,
                                          @NotNull JClass actorClass, @NotNull ExecutableElement method,
-                                         boolean hasResult) throws GeneratorException {
+                                         @Nullable JClass result) throws GeneratorException {
         JDefinedClass cls;
         int index = 0;
         for (;;++index) {
@@ -75,28 +74,27 @@ import java.util.List;
             }
         }
 
-        JFieldVar exception = cls.field(JMod.PRIVATE | JMod.FINAL, ActorMethodInvokeException.class, "mException");
-        generateConstructors(cls, exception, method.getParameters());
+        generateConstructors(cls, method.getParameters());
         generateToString(cls, method.getSimpleName().toString(), method.getParameters());
-        generateThrowableGetter(cls, exception);
 
-        if (!hasResult) {
-            cls._implements(mModel.ref(Message.class).narrow(actorClass));
-            generateVoidInvoke(cls, actorClass, method.getSimpleName().toString(), method.getParameters());
+        JClass superClass = mModel.ref(MessageBase.class).narrow(actorClass);
+        if (result == null) {
+            superClass = superClass.narrow(Void.class);
         } else {
-            cls._implements(mModel.ref(MessageWithResult.class).narrow(actorClass));
-            generateResultInvoke(cls, actorClass, method.getSimpleName().toString(), method.getParameters());
+            superClass = superClass.narrow(result);
         }
+        cls._extends(superClass);
+
+        generateInvoke(cls, actorClass, method.getSimpleName().toString(), method.getParameters(), result);
 
         return cls;
     }
 
     private void generateConstructors(@NotNull JDefinedClass cls,
-                                      @NotNull JFieldVar exception,
                                       @NotNull List<? extends VariableElement> parameters) throws GeneratorException {
         final JMethod constructor = cls.constructor(JMod.NONE);
         final JVar exceptionParam = constructor.param(mModel._ref(ActorMethodInvokeException.class), "exception");
-        constructor.body().assign(exception, exceptionParam);
+        constructor.body().invoke("super").arg(exceptionParam);
 
         for (VariableElement var : parameters) {
             final String name = var.getSimpleName().toString();
@@ -108,46 +106,33 @@ import java.util.List;
         }
     }
 
-    private void generateVoidInvoke(@NotNull JDefinedClass cls, @NotNull JClass actorClass, @NotNull String methodName,
-                                    @NotNull List<? extends VariableElement> parameters) {
-        final JMethod invokeMethod = cls.method(JMod.PUBLIC, void.class, "invoke");
+    private void generateInvoke(@NotNull JDefinedClass cls,
+                                    @NotNull JClass actorClass,
+                                    @NotNull String methodName,
+                                    @NotNull List<? extends VariableElement> parameters,
+                                    @Nullable JClass resultType) {
+        JClass result = mModel.ref(Promise.class);
+        if (resultType == null) {
+            result = result.narrow(Void.class);
+        } else {
+            result = result.narrow(resultType);
+        }
+        final JMethod invokeMethod = cls.method(JMod.PUBLIC, result, "invoke");
         JVar target = invokeMethod.param(actorClass, "target");
         invokeMethod.annotate(Override.class);
+        invokeMethod.annotate(Nullable.class);
+        target.annotate(NonNull.class);
         JInvocation call = target.invoke(methodName);
-        invokeMethod.body().add(call);
         for (VariableElement var : parameters) {
             call.arg(cls.fields().get(var.getSimpleName().toString()));
         }
-    }
 
-    private void generateThrowableGetter(@NotNull JDefinedClass cls, @NotNull JFieldVar exception) {
-        final JMethod exceptionMethod = cls.method(JMod.PUBLIC, ActorMethodInvokeException.class, "exception");
-        exceptionMethod.annotate(Override.class);
-        exceptionMethod.annotate(NonNull.class);
-        exceptionMethod.body()._return(exception);
-    }
-
-    private void generateResultInvoke(@NotNull JDefinedClass cls, @NotNull JClass actorClass, @NotNull String methodName,
-                                      @NotNull List<? extends VariableElement> parameters) {
-        final JMethod invokeMethod = cls.method(JMod.PUBLIC, void.class, "invoke");
-        invokeMethod.annotate(SuppressWarnings.class).param("value", "unchecked");
-        JTypeVar T = invokeMethod.generify("T");
-
-        JClass resultSender = mModel.ref(Promise.Dispatcher.class);
-        resultSender = resultSender.narrow(T);
-
-        JClass promiseRef = mModel.ref(Promise.class);
-
-        JVar target = invokeMethod.param(actorClass, "target");
-        JVar promise = invokeMethod.param(resultSender, "promise");
-
-        invokeMethod.annotate(Override.class);
-        JInvocation call = target.invoke(methodName);
-        JVar result = invokeMethod.body().decl(promiseRef, "result").init(call);
-        invokeMethod.body().add(promise.invoke("dispatch").arg(result));
-
-        for (VariableElement var : parameters) {
-            call.arg(cls.fields().get(var.getSimpleName().toString()));
+        if (resultType != null) {
+            call = JExpr.invoke("verifyResult").arg(call);
+            invokeMethod.body()._return(call);
+        } else {
+            invokeMethod.body().add(call);
+            invokeMethod.body()._return(JExpr._null());
         }
     }
 

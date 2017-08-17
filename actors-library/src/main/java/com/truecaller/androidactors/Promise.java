@@ -43,7 +43,6 @@ public abstract class Promise<R> {
     @NonNull
     public abstract ActionHandle then(@NonNull ResultListener<R> listener);
 
-    /* package */ abstract void deliver(@NonNull ResultListenerContainer<R> container);
     /**
      * Ask the library to pass a result to the result listener on the provided thread
      *
@@ -56,7 +55,6 @@ public abstract class Promise<R> {
     @NonNull
     public abstract ActionHandle then(@NonNull ActorThread thread, @NonNull ResultListener<R> listener);
 
-    /* package */ abstract void deliver(@NonNull ActorThread thread, @NonNull ResultListenerContainer<R> container);
     /**
      * Block the current thread until the actor's method returns a result.
      * In most cases you don't need this method.
@@ -95,7 +93,7 @@ public abstract class Promise<R> {
     }
 
     @NonNull
-    public static <I, T extends MessageWithResult<I>, R> Promise<R> wrap(@NonNull MessageSender sender, @NonNull T message) {
+    public static <I, R, T extends Message<I, R>> Promise<R> wrap(@NonNull MessageSender sender, @NonNull T message) {
         return new PromiseProxy<>(sender, message);
     }
 
