@@ -30,7 +30,7 @@ allprojects {
     group = 'com.truecaller'
     version = "1.1.6"
 
-    if (!project.hasProperty("IS_RELEASE_BUILD")) {
+    if (!project.hasProperty("build.isRelease")) {
         version = "$version-SNAPSHOT"
     }
 
