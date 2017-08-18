@@ -15,9 +15,10 @@
  */
 
 apply plugin: 'maven'
-apply plugin: 'signing'
 
 if (project.hasProperty('signing.keyId')) {
+    apply plugin: 'signing'
+
     signing {
         sign configurations.archives
     }
@@ -65,7 +66,31 @@ install {
     }
 }
 
-if (project.hasProperty('ossrh.user') && project.hasProperty('ossrh.password')) {
+if (project.hasProperty('build.isInternal')) {
+
+    def login = properties['nexusUser']
+    def password = properties['nexusPassword']
+    def releases = properties['nexusReleases']
+    def snapshots = properties['nexusSnapshots']
+
+    if (login && password && releases && snapshots) {
+        uploadArchives {
+            repositories {
+                mavenDeployer {
+                    repository(url: releases) {
+                        authentication(userName: login, password: password)
+                    }
+
+                    snapshotRepository(url: snapshots) {
+                        authentication(userName: login, password: password)
+                    }
+
+                    configurePom(pom)
+                }
+            }
+        }
+    }
+} else if (project.hasProperty('ossrh.user') && project.hasProperty('ossrh.password')) {
 
     def login = properties['ossrh.user']
     def password = properties['ossrh.password']
