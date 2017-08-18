@@ -11,8 +11,8 @@ Android Actors Library was inspired by the [Actor model](https://en.wikipedia.or
 Add the following dependencies to your project:
 
 ```groovy
-compile group: 'com.truecaller', name: 'android-actors-library', version: '1.1.5'
-annotationProcessor group:'com.truecaller', name: 'android-actors-generator', version: '1.1.5'
+compile group: 'com.truecaller', name: 'android-actors-library', version: <LATEST-VERSION>
+annotationProcessor group:'com.truecaller', name: 'android-actors-generator', version: <LATEST-VERSION>
 ```
 
 #### Specify a package for ActorsBuilder
