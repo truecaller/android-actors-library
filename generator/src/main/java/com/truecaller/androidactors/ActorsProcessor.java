@@ -16,21 +16,8 @@
 
 package com.truecaller.androidactors;
 
-import android.support.annotation.NonNull;
-import android.support.annotation.Nullable;
-import com.sun.codemodel.ClassType;
-import com.sun.codemodel.JClass;
-import com.sun.codemodel.JClassAlreadyExistsException;
-import com.sun.codemodel.JCodeModel;
-import com.sun.codemodel.JDefinedClass;
-import com.sun.codemodel.JExpr;
-import com.sun.codemodel.JFieldVar;
-import com.sun.codemodel.JInvocation;
-import com.sun.codemodel.JMethod;
-import com.sun.codemodel.JMod;
-import com.sun.codemodel.JType;
-import com.sun.codemodel.JVar;
-import org.apache.commons.lang3.StringUtils;
+import android.support.annotation.VisibleForTesting;
+import com.squareup.javapoet.JavaFile;
 import org.jetbrains.annotations.NotNull;
 
 import javax.annotation.processing.AbstractProcessor;
@@ -39,28 +26,38 @@ import javax.annotation.processing.RoundEnvironment;
 import javax.annotation.processing.SupportedAnnotationTypes;
 import javax.lang.model.SourceVersion;
 import javax.lang.model.element.Element;
-import javax.lang.model.element.ElementKind;
-import javax.lang.model.element.ExecutableElement;
-import javax.lang.model.element.PackageElement;
 import javax.lang.model.element.TypeElement;
-import javax.lang.model.element.VariableElement;
-import javax.lang.model.type.TypeKind;
-import javax.lang.model.type.TypeMirror;
 import javax.tools.Diagnostic.Kind;
 import java.io.IOException;
-import java.util.HashSet;
-import java.util.List;
+import java.lang.annotation.Annotation;
 import java.util.Set;
 
 @SupportedAnnotationTypes(value = {"com.truecaller.androidactors.ActorInterface", "com.truecaller.androidactors.ActorsPackage"})
 public class ActorsProcessor extends AbstractProcessor {
 
-    private Set<ProxyItem> mProxy;
+    private final ModelFactory mModelFactory;
+
+    private ActorParsedModel mParsedModel;
+
+    private ActorGeneratedModel mGeneratedModel;
+
+    @SuppressWarnings("unused")
+    public ActorsProcessor() {
+        super();
+        mModelFactory = new ModelFactoryImpl();
+    }
+
+    @VisibleForTesting
+    /* package */ ActorsProcessor(@NotNull ModelFactory modelFactory) {
+        super();
+        mModelFactory = modelFactory;
+    }
 
     @Override
     public synchronized void init(ProcessingEnvironment processingEnv) {
         super.init(processingEnv);
-        mProxy = new HashSet<>();
+        mParsedModel = new ActorParsedModel();
+        mGeneratedModel = new ActorGeneratedModel();
     }
 
     @Override
@@ -70,201 +67,124 @@ public class ActorsProcessor extends AbstractProcessor {
 
     @Override
     public boolean process(Set<? extends TypeElement> annotations, RoundEnvironment roundEnv) {
-        try {
-            final JCodeModel model = new JCodeModel();
-            final Set<? extends Element> elements = roundEnv.getElementsAnnotatedWith(ActorInterface.class);
-            final TypeUtils typeUtils = new TypeUtils(model);
-            final ProxyMessageGenerator messageGenerator = new ProxyMessageGenerator(model, typeUtils);
-            final ActorBuilderGenerator actorBuilderGenerator = new ActorBuilderGenerator(model);
+        configureModel(annotations, mParsedModel);
 
-            if (elements == null || elements.isEmpty()) {
+        parseModel(mParsedModel, roundEnv);
+
+        if (!validateModel(mParsedModel)) {
+            for (GenerationError error : mParsedModel.errors) {
+                error.print(processingEnv.getMessager());
+            }
+
+            return false;
+        }
+
+        generateFromModel(mParsedModel, mGeneratedModel);
+
+        return writeModel(mGeneratedModel);
+    }
+
+    private void configureModel(@NotNull Set<? extends TypeElement> annotations, @NotNull ActorParsedModel model) {
+        model.collectInterfaces = containsAnnotation(annotations, ActorInterface.class);
+        model.collectPackages = containsAnnotation(annotations, ActorsPackage.class);
+    }
+
+    @VisibleForTesting
+    /* package */ void parseModel(@NotNull ActorParsedModel model, @NotNull RoundEnvironment environment) {
+        if (model.collectInterfaces) {
+            final Set<? extends Element> elements = environment.getElementsAnnotatedWith(ActorInterface.class);
+            for (Element element : elements) {
+                model.interfaces.add(mModelFactory.createInterfaceDescription(element));
+            }
+        }
+
+        if (model.collectPackages) {
+            Set<? extends Element> packages = environment.getElementsAnnotatedWith(ActorsPackage.class);
+            for (Element _package : packages) {
+                model.packages.add(mModelFactory.createPackageDescription(_package));
+            }
+        }
+    }
+
+    @VisibleForTesting
+    /* package */ boolean validateModel(@NotNull ActorParsedModel model) {
+        boolean result = true;
+
+        if (model.collectInterfaces) {
+            for (ActorInterfaceDescription _interface : model.interfaces) {
+                if (!_interface.validate()) {
+                    _interface.describeProblems(model.errors);
+                    result = false;
+                }
+            }
+        }
+
+        if (!model.collectInterfaces || model.collectPackages) {
+            int packages = 0;
+            for (ActorsPackageDescription _package : model.packages) {
+                if (!_package.validate()) {
+                    _package.describeProblems(model.errors);
+                } else {
+                    ++packages;
+                }
+            }
+
+            switch (packages) {
+                case 0:
+                    model.errors.add(new GenerationError(GenerationError.ER0010));
+                    result = false;
+                    break;
+                case 1:
+                    break;
+                default:
+                    model.errors.add(new GenerationError(GenerationError.ER0009));
+                    result = false;
+                    break;
+            }
+        }
+
+        return result;
+    }
+
+    @VisibleForTesting
+    /* package */ void generateFromModel(@NotNull ActorParsedModel model, @NotNull ActorGeneratedModel generated) {
+        if (model.collectInterfaces) {
+            for (ActorInterfaceDescription _interface : model.interfaces) {
+                generated.interfaces.add(mModelFactory.createInterfaceGenerator(_interface));
+            }
+
+            for (ActorInterfaceGenerator _interface : generated.interfaces) {
+                generated.files.add(_interface.generate(new NamesProviderImpl()));
+            }
+        }
+
+        if (!model.collectInterfaces && generated.builder == null) {
+            assert model.packages.size() == 1;
+            generated.builder = mModelFactory.createBuilderGenerator(model.packages.get(0));
+            generated.files.add(generated.builder.generate(generated.interfaces));
+        }
+    }
+
+    @VisibleForTesting
+    /* package */ boolean writeModel(@NotNull ActorGeneratedModel model) {
+        try {
+            for (JavaFile file : model.files) {
+                file.writeTo(processingEnv.getFiler());
+            }
+            model.files.clear();
+        } catch (IOException e) {
+            processingEnv.getMessager().printMessage(Kind.ERROR, e.getMessage());
+            return false;
+        }
+        return true;
+    }
+
+    private boolean containsAnnotation(Set<? extends TypeElement> annotations, Class<? extends Annotation> needle) {
+        for (TypeElement type : annotations) {
+            if (needle.getCanonicalName().contentEquals(type.getQualifiedName())) {
                 return true;
             }
-
-            boolean hasNewProxy = false;
-            for (Element element : elements) {
-                if (element.getKind() != ElementKind.INTERFACE) {
-                    processingEnv.getMessager().printMessage(Kind.ERROR,
-                            "Only interfaces can be annotated by this annotation.",
-                            element);
-                    return false;
-                }
-
-                TypeElement typeElement = (TypeElement) element;
-
-                if (!typeUtils.isPublic(typeElement)) {
-                    processingEnv.getMessager().printMessage(Kind.ERROR, "Actor interface must be public", typeElement);
-                    return false;
-                }
-
-                JDefinedClass cls = generateProxy(model, typeUtils, messageGenerator, typeElement);
-                if (cls == null) {
-                    return false;
-                }
-                hasNewProxy = hasNewProxy | mProxy.add(new ProxyItem(typeElement, cls));
-            }
-
-            if (hasNewProxy && !buildActorsBuilder(roundEnv, actorBuilderGenerator ,mProxy)) {
-                return false;
-            }
-
-            ActorsCodeWriter codeWriter = new ActorsCodeWriter(processingEnv.getFiler());
-            ResourcesCodeWriter resourceWriter = new ResourcesCodeWriter(processingEnv.getFiler());
-            try {
-                model.build(codeWriter, resourceWriter);
-            } catch (IOException e) {
-                processingEnv.getMessager().printMessage(Kind.ERROR, e.getMessage());
-                return false;
-            }
-
-            return true;
-        } catch (GeneratorException e) {
-            processingEnv.getMessager().printMessage(Kind.ERROR, e.getMessage(), e.getElement());
-            return false;
         }
-    }
-
-    @Nullable
-    private JDefinedClass generateProxy(@NotNull JCodeModel model,
-                                        @NotNull TypeUtils typeUtils,
-                                        @NotNull ProxyMessageGenerator messageGenerator,
-                                        @NotNull TypeElement type) throws GeneratorException {
-        final String className = buildProxyName(type);
-
-        JDefinedClass cls;
-        try {
-            cls = model._class(JMod.PUBLIC | JMod.FINAL, className + "Proxy", ClassType.CLASS);
-        } catch (JClassAlreadyExistsException e) {
-            cls = e.getExistingClass();
-        }
-        JClass actorClass = model.ref(type.getQualifiedName().toString());
-        cls = cls._implements(actorClass);
-
-        JFieldVar sender = cls.field(JMod.FINAL | JMod.PRIVATE, MessageSender.class, "mMessageSender");
-        JMethod constructor = cls.constructor(JMod.PUBLIC);
-        JVar senderParam = constructor.param(MessageSender.class, "messageSender");
-        constructor.body().assign(sender, senderParam);
-
-        for (Element element : type.getEnclosedElements()) {
-            if (element.getKind() != ElementKind.METHOD) {
-                continue;
-            }
-
-            ExecutableElement method = (ExecutableElement) element;
-            // check that method will not throw exception
-            if (!method.getThrownTypes().isEmpty()) {
-                processingEnv.getMessager().printMessage(Kind.ERROR, "Actor's methods can not throw exceptions", method);
-                return null;
-            }
-            // check that return type is Promise or nothing
-            boolean hasResult = false;
-            TypeMirror methodResultType = method.getReturnType();
-            JType returnType = model.VOID;
-            if (methodResultType.getKind() != TypeKind.VOID) {
-                hasResult = true;
-                returnType = typeUtils.toJType(methodResultType);
-                if (StringUtils.compare(returnType.erasure().binaryName(), Promise.class.getCanonicalName()) != 0) {
-                    processingEnv.getMessager().printMessage(Kind.ERROR, "Actor's methods can return only Promise", method);
-                    return null;
-                }
-
-                if (method.getAnnotation(NonNull.class) == null) {
-                    processingEnv.getMessager().printMessage(Kind.ERROR, "Actor's methods which return Promise MUST be annotated by @NonNull annotation", method);
-                    return null;
-                }
-            }
-
-            JClass promised = null;
-            if (hasResult) {
-                List<JClass> typeParams = ((JClass) returnType).getTypeParameters();
-                if (typeParams.size() == 0) {
-                    processingEnv.getMessager().printMessage(Kind.ERROR, "Specify promised type", method);
-                    return null;
-                } else if (typeParams.size() > 1) {
-                    processingEnv.getMessager().printMessage(Kind.ERROR, "Unexpected promise specialization", method);
-                    return null;
-                }
-                promised = typeParams.get(0);
-            }
-
-            final JClass message = messageGenerator.generateMessage(className, actorClass, method, promised);
-            final JMethod mth = cls.method(JMod.PUBLIC | JMod.FINAL, returnType, method.getSimpleName().toString());
-            mth.annotate(Override.class);
-            if (returnType != model.VOID) {
-                mth.annotate(NonNull.class);
-            }
-            final JInvocation newMessage = JExpr._new(message);
-            final JInvocation invocation;
-            if (hasResult) {
-                invocation = model.ref(Promise.class).staticInvoke("wrap");
-                invocation.arg(sender).arg(newMessage);
-                mth.body()._return(invocation);
-            } else {
-                invocation = sender.invoke("deliver");
-                invocation.arg(newMessage);
-                mth.body().add(invocation);
-            }
-
-            // Pass RuntimeException as first parameter. It will be thrown in case of any exceptions
-            // on actor's thread during processing message
-            newMessage.arg(JExpr._new(model._ref(ActorMethodInvokeException.class)));
-
-            for (VariableElement var : method.getParameters()) {
-                JVar param = mth.param(typeUtils.toJType(var.asType()), var.getSimpleName().toString());
-                if (typeUtils.isNotNull(var)) {
-                    param.annotate(NonNull.class);
-                }
-                newMessage.arg(param);
-            }
-        }
-
-        return cls;
-    }
-
-    @NotNull
-    private String buildProxyName(@NotNull TypeElement type) {
-        StringBuilder result = new StringBuilder();
-
-        for(;;) {
-            result.insert(0, type.getSimpleName());
-            Element element = type.getEnclosingElement();
-            if (element.getKind() == ElementKind.PACKAGE) {
-                result.insert(0, '.');
-                result.insert(0, ((PackageElement) element).getQualifiedName());
-                return result.toString();
-            } else {
-                result.insert(0, '_');
-                type = (TypeElement) element;
-            }
-        }
-    }
-
-    private boolean buildActorsBuilder(@NotNull RoundEnvironment roundEnvironment,
-                                       @NotNull ActorBuilderGenerator generator,
-                                       @NotNull Set<ProxyItem> proxyItems) {
-        Set<? extends Element> packages = roundEnvironment.getElementsAnnotatedWith(ActorsPackage.class);
-
-        PackageElement pkg = null;
-        if (packages != null) {
-            for (Element element : packages) {
-                if (element.getKind() != ElementKind.PACKAGE) {
-                    continue;
-                }
-
-                if (pkg != null) {
-                    processingEnv.getMessager().printMessage(Kind.ERROR, "Only one package can be marked by @ActorsPackage", pkg);
-                    return false;
-                }
-
-                pkg = (PackageElement) element;
-            }
-        }
-
-        if (pkg == null) {
-            processingEnv.getMessager().printMessage(Kind.ERROR, "You MUST mark package which will contain actors builder by @ActorsPackage annotation");
-            return false;
-        }
-
-        return generator.generate(pkg, pkg.getAnnotation(ActorsPackage.class), proxyItems);
+        return false;
     }
 }

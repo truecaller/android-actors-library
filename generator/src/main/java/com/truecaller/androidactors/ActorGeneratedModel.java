@@ -16,32 +16,20 @@
 
 package com.truecaller.androidactors;
 
-import android.support.annotation.NonNull;
+import com.squareup.javapoet.JavaFile;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.lang.model.element.Element;
+import java.util.ArrayList;
+import java.util.List;
 
-/* package */ class GeneratorException extends Exception {
+/* package */ class ActorGeneratedModel {
+    @NotNull
+    /* package */ final List<JavaFile> files = new ArrayList<>();
 
-    @Nullable
-    private Element mElement;
-
-    /* package */ GeneratorException(String message, @Nullable Element element) {
-        super(message);
-        mElement = element;
-    }
-
-    /* package */ GeneratorException(String message, Throwable cause, @Nullable Element element) {
-        super(message, cause);
-        mElement = element;
-    }
+    @NotNull
+    /* package */ final List<ActorInterfaceGenerator> interfaces = new ArrayList<>();
 
     @Nullable
-    /* package */ Element getElement() {
-        return mElement;
-    }
-
-    /* package */ void setElement(@NonNull Element element) {
-        mElement = element;
-    }
+    /* package */ ActorsPackageGenerator builder = null;
 }
