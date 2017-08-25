@@ -108,8 +108,4 @@ public abstract class Promise<R> {
     public static <I, R, T extends Message<I, R>> Promise<R> wrap(@NonNull MessageSender sender, @NonNull T message) {
         return new PromiseProxy<>(sender, message);
     }
-
-    public interface Dispatcher<R> {
-        void dispatch(@NonNull Promise<R> promise);
-    }
 }

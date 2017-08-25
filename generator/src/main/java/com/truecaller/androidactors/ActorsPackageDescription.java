@@ -16,28 +16,22 @@
 
 package com.truecaller.androidactors;
 
-import com.sun.codemodel.JDefinedClass;
 import org.jetbrains.annotations.NotNull;
 
-import javax.lang.model.element.TypeElement;
+import java.util.List;
 
-/* package */ class ProxyItem {
-    final TypeElement type;
-    final JDefinedClass proxyClass;
+public interface ActorsPackageDescription {
 
-    ProxyItem(@NotNull TypeElement type, @NotNull JDefinedClass proxyClass) {
-        this.type = type;
-        this.proxyClass = proxyClass;
-    }
+    boolean validate();
 
-    @Override
-    public int hashCode() {
-        return type.getQualifiedName().hashCode();
-    }
+    void describeProblems(@NotNull List<GenerationError> errors);
 
-    @Override
-    public boolean equals(Object obj) {
-        return obj instanceof ProxyItem &&
-                type.getQualifiedName().equals(((ProxyItem) obj).type.getQualifiedName());
-    }
+    @NotNull
+    String getPackageName();
+
+    @NotNull
+    String getBuilderClassName();
+
+    @NotNull
+    ActorsPackage.AccessLevel getAccessLevel();
 }
