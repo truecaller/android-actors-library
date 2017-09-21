@@ -57,6 +57,8 @@ public interface ActorInterfaceDescription {
 
             @NotNull
             List<? extends AnnotationMirror> getAnnotations();
+
+            int getSecureLevel();
         }
     }
 }
