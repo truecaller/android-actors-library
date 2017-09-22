@@ -28,5 +28,5 @@ public @interface SecureParameter {
     int LEVEL_NULL_OR_EMPTY_STRING = 1;
     int LEVEL_FULL_INFO = 2;
 
-    int value() default LEVEL_FULL_INFO;
+    int value() default LEVEL_NULL_OR_EMPTY_STRING;
 }

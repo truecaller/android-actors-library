@@ -288,6 +288,16 @@ Caused by java.lang.NullPointerException
        at android.os.HandlerThread.run(HandlerThread.java:61)
 ```
 
+By default, all values from parameters will be logged.
+
+You can control this behavior, for example to avoid sending sensitive data to crash reporting services.
+To do so, you need to decorate your parameters with the [@SecureParameter](actors-library/src/main/java/com/truecaller/androidactors/SecureParameter.java) annotation.
+
+Here are the different options:
+- [SecureParameter.LEVEL_NULL_OR_EMPTY_STRING](actors-library/src/main/java/com/truecaller/androidactors/SecureParameter.java#LEVEL_NULL_OR_EMPTY_STRING) (default value) will indicate if the parameter's value is null/non null or empty/non empty string,
+- [SecureParameter.LEVEL_FULL_INFO](actors-library/src/main/java/com/truecaller/androidactors/SecureParameter.java#LEVEL_FULL_INFO) will log the string representation of the parameter's value,
+- [SecureParameter.LEVEL_NO_INFO](actors-library/src/main/java/com/truecaller/androidactors/SecureParameter.java#LEVEL_NO_INFO) will not log any value.
+
 ## LICENSE
 
 Copyright (C) 2017 True Software Scandinavia AB
