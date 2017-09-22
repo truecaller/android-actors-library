@@ -16,11 +16,14 @@
 
 package com.truecaller.androidactors;
 
+import android.app.Service;
 import android.content.Intent;
 import android.os.IBinder;
-import com.truecaller.androidactors.ActorService.Transaction;
+import android.os.PowerManager;
+import android.support.annotation.Nullable;
 import org.junit.Assert;
 import org.junit.Before;
+import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.Mock;
@@ -31,152 +34,113 @@ import org.robolectric.RobolectricTestRunner;
 import org.robolectric.Shadows;
 import org.robolectric.android.controller.ServiceController;
 import org.robolectric.annotation.Config;
+import org.robolectric.shadows.ShadowApplication;
 import org.robolectric.shadows.ShadowLooper;
+import org.robolectric.shadows.ShadowPowerManager;
 import org.robolectric.shadows.ShadowService;
 
 @RunWith(RobolectricTestRunner.class)
 @Config(manifest = Config.NONE)
 public class ActorServiceTest {
-    @Mock
-    private Object mActorImpl;
+    private static final String SERVICE_NAME = "test-service";
 
     @Mock
     private FailureHandler mFailureHandler;
 
-    private ActorService mService;
+    @Mock
+    private Message mMessage;
 
-    private ShadowService mShadowService;
-
-    private ActorService.ServiceMessageSender mMessageSender;
+    private final Object mImpl = new Object();
 
     @Before
     public void setUp() {
         MockitoAnnotations.initMocks(this);
+    }
 
-        mService = new ActorService("test");
-        ServiceController<ActorService> serviceController = ServiceController.of(Robolectric.getShadowsAdapter(), mService, null);
+    private ActorService createService() {
+        return createService(false);
+    }
+
+    private ActorService createService(boolean useWakeLock) {
+        ActorService result = new ActorService(SERVICE_NAME, 0, useWakeLock);
+        ServiceController<ActorService> serviceController = ServiceController.of(Robolectric.getShadowsAdapter(), result, null);
         serviceController.create();
-
-        mShadowService = Shadows.shadowOf(mService);
-        IBinder binder = mService.onBind(new Intent());
-
-        mMessageSender = (ActorService.ServiceMessageSender) binder.queryLocalInterface(ActorService.LOCAL_SENDER_INTERFACE);
-
-        Transaction.clearPool();
-    }
-
-    @SuppressWarnings("unchecked")
-    @Test
-    public void oneMessageDeliveryTest() {
-        Assert.assertNotNull(mMessageSender);
-
-        ShadowLooper shadowLooper = Shadows.shadowOf(mService.mThread.getLooper());
-
-        final Message message = Mockito.mock(Message.class);
-
-        Transaction transaction = Mockito.spy(Transaction.obtain(mActorImpl, message, mFailureHandler));
-        Assert.assertTrue(mMessageSender.deliver(transaction));
-        // We shouldn't do anything directly
-        Mockito.verifyZeroInteractions(mActorImpl);
-
-        // Now execute actual task
-        shadowLooper.runOneTask();
-
-        Mockito.verify(message).invoke(mActorImpl);
-        Mockito.verify(transaction).recycle();
-
-        // Should wait for a while before stopping self
-        Assert.assertFalse(mShadowService.isStoppedBySelf());
-
-        // Execute next message. Now we should take a poison pill and stop self.
-        shadowLooper.runOneTask();
-        Assert.assertTrue(mShadowService.isStoppedBySelf());
-
-        // Next execution should reject transaction
-        Assert.assertFalse(mMessageSender.deliver(transaction));
-    }
-
-    @SuppressWarnings("unchecked")
-    @Test
-    public void twoMessageDeliveryTest() {
-        Assert.assertNotNull(mMessageSender);
-
-        ShadowLooper shadowLooper = Shadows.shadowOf(mService.mThread.getLooper());
-
-        final Message message1 = Mockito.mock(Message.class);
-        final Message message2 = Mockito.mock(Message.class);
-
-        Transaction transaction1 = Mockito.spy(Transaction.obtain(mActorImpl, message1, mFailureHandler));
-        Transaction transaction2 = Mockito.spy(Transaction.obtain(mActorImpl, message2, mFailureHandler));
-        Assert.assertTrue(mMessageSender.deliver(transaction1));
-        Assert.assertTrue(mMessageSender.deliver(transaction2));
-        // We shouldn't do anything directly
-        Mockito.verifyZeroInteractions(mActorImpl);
-
-        // Process first message. Service should not be stopped
-        shadowLooper.runOneTask();
-
-        Mockito.verify(message1).invoke(mActorImpl);
-        Mockito.verify(transaction1).recycle();
-
-        Assert.assertFalse(mShadowService.isStoppedBySelf());
-
-        // Process second one and check that service was stopped
-        shadowLooper.runOneTask();
-
-        Mockito.verify(message1).invoke(mActorImpl);
-        Mockito.verify(transaction1).recycle();
-
-        // Should wait for a while before stopping self
-        Assert.assertFalse(mShadowService.isStoppedBySelf());
-
-        // Execute next message. Now we should take a poison pill and stop self.
-        shadowLooper.runOneTask();
-        Assert.assertTrue(mShadowService.isStoppedBySelf());
-    }
-
-    @SuppressWarnings({"unchecked", "ThrowableNotThrown"})
-    @Test
-    public void deliverMessageWithExceptionTest() {
-        Assert.assertNotNull(mMessageSender);
-
-        ShadowLooper shadowLooper = Shadows.shadowOf(mService.mThread.getLooper());
-
-        final Throwable occurredException = Mockito.mock(RuntimeException.class);
-        final Message message = Mockito.mock(Message.class);
-        final ActorMethodInvokeException baseCallException = Mockito.mock(ActorMethodInvokeException.class);
-        Mockito.doThrow(occurredException).when(message).invoke(Mockito.any());
-        Mockito.doReturn(baseCallException).when(message).exception();
-
-        Transaction transaction = Mockito.spy(Transaction.obtain(mActorImpl, message, mFailureHandler));
-        Assert.assertTrue(mMessageSender.deliver(transaction));
-        // We shouldn't do anything directly
-        Mockito.verifyZeroInteractions(mActorImpl);
-
-        // Now execute actual task
-        shadowLooper.runOneTask();
-
-        Mockito.verify(message).invoke(mActorImpl);
-        Mockito.verify(mFailureHandler).onUncaughtException(mActorImpl, message, baseCallException);
-        Mockito.verify(transaction).recycle();
-        Mockito.verify(baseCallException).initCause(occurredException);
-
-        // Should wait for a while before stopping self
-        Assert.assertFalse(mShadowService.isStoppedBySelf());
-
-        // Execute next message. Now we should take a poison pill and stop self.
-        shadowLooper.runOneTask();
-        Assert.assertTrue(mShadowService.isStoppedBySelf());
+        return result;
     }
 
     @Test
-    public void terminateTest() {
-        Assert.assertNotNull(mMessageSender);
+    public void onBind_hasValidLocalInterface_always() throws Exception {
+        IBinder binder = createService().onBind(new Intent());
+        Assert.assertEquals(ActorService.LOCAL_SENDER_INTERFACE, binder.getInterfaceDescriptor());
+        Assert.assertNotNull(binder.queryLocalInterface(ActorService.LOCAL_SENDER_INTERFACE));
+    }
 
-        ShadowLooper shadowLooper = Shadows.shadowOf(mService.mThread.getLooper());
+    @Test
+    public void onDestroy_terminateAndClear_always() throws Exception {
+        ActorService service = createService();
+        ShadowLooper shadowLooper = Shadows.shadowOf(service.mThread.getLooper());
+        IBinder binder = service.onBind(new Intent());
 
-        mService.onDestroy();
+        service.onDestroy();
 
         Assert.assertTrue(shadowLooper.hasQuit());
+        Assert.assertNull(null, binder.getInterfaceDescriptor());
+    }
+
+    @SuppressWarnings("unchecked")
+    @Test
+    public void deliver_deliverMessage_always() throws Exception {
+        ActorService service = createService();
+        IBinder binder = service.onBind(new Intent());
+        ActorService.RemoteMessageSender sender = (ActorService.RemoteMessageSender) binder.queryLocalInterface(ActorService.LOCAL_SENDER_INTERFACE);
+
+        sender.deliver(Transaction.<Object>obtain(mImpl, mMessage, mFailureHandler));
+
+        ShadowLooper shadowLooper = Shadows.shadowOf(service.mThread.getLooper());
+        shadowLooper.runOneTask();
+
+        Mockito.verify(mMessage).invoke(mImpl);
+        Assert.assertEquals(false, Shadows.shadowOf(service).isStoppedBySelf());
+    }
+
+    @SuppressWarnings("unchecked")
+    @Test
+    public void deliver_useWakeLocks_always() throws Exception {
+        ActorService service = createService(true);
+        IBinder binder = service.onBind(new Intent());
+        ActorService.RemoteMessageSender sender = (ActorService.RemoteMessageSender) binder.queryLocalInterface(ActorService.LOCAL_SENDER_INTERFACE);
+
+        sender.deliver(Transaction.<Object>obtain(mImpl, mMessage, mFailureHandler));
+
+        ShadowLooper shadowLooper = Shadows.shadowOf(service.mThread.getLooper());
+        shadowLooper.runOneTask();
+
+        PowerManager.WakeLock wakeLock = ShadowPowerManager.getLatestWakeLock();
+        Assert.assertNotNull(wakeLock);
+        Assert.assertEquals(false, wakeLock.isHeld());
+    }
+
+    @SuppressWarnings("unchecked")
+    @Test
+    public void deliver_stopService_always() throws Exception {
+        ActorService service = createService();
+        IBinder binder = service.onBind(new Intent());
+        ActorService.RemoteMessageSender sender = (ActorService.RemoteMessageSender) binder.queryLocalInterface(ActorService.LOCAL_SENDER_INTERFACE);
+
+        sender.deliver(Transaction.<Object>obtain(mImpl, mMessage, mFailureHandler));
+
+        ShadowLooper shadowLooper = Shadows.shadowOf(service.mThread.getLooper());
+
+        shadowLooper.runOneTask();
+        Assert.assertEquals(false, Shadows.shadowOf(service).isStoppedBySelf());
+
+        shadowLooper.runOneTask();
+        Assert.assertEquals(true, Shadows.shadowOf(service).isStoppedBySelf());
+    }
+
+    @Test
+    public void onStartCommand_START_NOT_STICKY_allways() {
+        ActorService service = createService();
+        Assert.assertEquals(Service.START_NOT_STICKY, service.onStartCommand(new Intent(), 0, 10));
     }
 }

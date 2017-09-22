@@ -118,7 +118,7 @@ public class AppModule {
     @Named(THREAD_DB)
     @NonNull
     /* package */ ActorThread databaseThread(@NonNull ActorsThreads actors) {
-        return actors.createThread(THREAD_DB);
+        return actors.createThread(THREAD_DB, 0);
     }
 
     @Singleton

@@ -31,6 +31,9 @@ public interface ActorsThreads {
     ActorThread createThread(@NonNull String name);
 
     @NonNull
+    ActorThread createThread(@NonNull String name, long stopDelay);
+
+    @NonNull
     ActorThread createThread(@NonNull Looper looper);
 
     @NonNull

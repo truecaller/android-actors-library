@@ -51,6 +51,7 @@ public abstract class ActorsThreadsBase implements ActorsThreads {
         mFailureHandler = failureHandler;
     }
 
+    @Override
     @NonNull
     public ActorThread ui() {
         ActorThread thread = sUiThread;
@@ -65,28 +66,37 @@ public abstract class ActorsThreadsBase implements ActorsThreads {
         return thread;
     }
 
+    @Override
     @NonNull
     public ActorThread createThread(@NonNull String name) {
-        final HandlerThread thread = new HandlerThread(name);
-        thread.start();
-        return new LooperActorThread(mProxyFactory, mFailureHandler, thread.getLooper());
+        return new DefaultActorThread(mProxyFactory, mFailureHandler, name);
     }
 
+    @Override
+    @NonNull
+    public ActorThread createThread(@NonNull String name, long stopDelay) {
+        return new DefaultActorThread(mProxyFactory, mFailureHandler, name, stopDelay);
+    }
+
+    @Override
     @NonNull
     public ActorThread createThread(@NonNull Looper looper) {
         return new LooperActorThread(mProxyFactory, mFailureHandler, looper);
     }
 
+    @Override
     @NonNull
     public ActorThread createThread(@NonNull Context context, @NonNull Class<? extends ActorService> service) {
         return new ServiceActorThread(context, mProxyFactory, mFailureHandler, service);
     }
 
+    @Override
     @NonNull
     public ActorThread createThread(@NonNull Executor executor) {
         return new ExecutorActorThread(executor,mProxyFactory, mFailureHandler);
     }
 
+    @Override
     @NonNull
     public ActorThread createPooledThread(@NonNull String name, int maxThreads) {
         final Executor executor = new ThreadPoolExecutor(0, maxThreads,5, TimeUnit.MINUTES,

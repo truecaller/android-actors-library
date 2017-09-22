@@ -16,12 +16,12 @@
 
 package com.truecaller.androidactors;
 
-import com.truecaller.androidactors.ActorService.Transaction;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.Mock;
 
+@SuppressWarnings("unchecked")
 public class TransactionTest {
 
     @Mock
@@ -46,7 +46,7 @@ public class TransactionTest {
     }
 
     @Test
-    public void chainTest() {
+    public void recycle_buildValidChain_always() {
         Transaction transactions[] = new Transaction[] {
             Transaction.obtain(mImpl, mMessage, mFailureHandler),
             Transaction.obtain(mImpl, mMessage, mFailureHandler),
@@ -63,7 +63,7 @@ public class TransactionTest {
     }
 
     @Test
-    public void poolLimitTest() {
+    public void recycle_limitChain_always() {
         Transaction transactions[] = new Transaction[Transaction.MAX_POOL_SIZE + 2];
         for (int index = 0; index < transactions.length; ++index) {
             transactions[index] = Transaction.obtain(mImpl, mMessage, mFailureHandler);
