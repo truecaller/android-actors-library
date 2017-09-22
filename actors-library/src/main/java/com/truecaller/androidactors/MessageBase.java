@@ -17,6 +17,7 @@
 package com.truecaller.androidactors;
 
 import android.support.annotation.NonNull;
+import android.text.TextUtils;
 
 public abstract class MessageBase<T, R> implements Message<T, R> {
 
@@ -41,5 +42,34 @@ public abstract class MessageBase<T, R> implements Message<T, R> {
     @Override
     public ActorInvokeException exception() {
         return mExceptionTemplate;
+    }
+
+    @NonNull
+    protected static String logParam(Object parameter, int level) {
+        if (level == SecureParameter.LEVEL_NO_INFO) {
+            return "<value>";
+        }
+
+        if (parameter == null) {
+            return "null";
+        }
+
+        if (parameter instanceof CharSequence) {
+            if (TextUtils.isEmpty((CharSequence) parameter)) {
+                return "''";
+            }
+
+            if (level == SecureParameter.LEVEL_NULL_OR_EMPTY_STRING) {
+                return "<not empty string>";
+            }
+
+            return "'" + parameter + "'";
+        }
+
+        if (level != SecureParameter.LEVEL_FULL_INFO) {
+            return "<not null value>";
+        }
+
+        return String.valueOf(parameter);
     }
 }

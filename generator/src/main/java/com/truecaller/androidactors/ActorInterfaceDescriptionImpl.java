@@ -124,9 +124,7 @@ import java.util.List;
         // TODO: Support var args methods
         List<Method.Argument> arguments = new ArrayList<>();
         for (VariableElement param : method.getParameters()) {
-            Method.Argument argument = new Method.Argument(param.getAnnotationMirrors(),
-                    param.getSimpleName().toString(),
-                    param.asType());
+            Method.Argument argument = new Method.Argument(param);
             arguments.add(argument);
         }
 
@@ -200,6 +198,10 @@ import java.util.List;
                     }
                 }
             }
+
+            for (Argument argument : mArguments) {
+                argument.validate(errors);
+            }
         }
 
         @NotNull
@@ -232,8 +234,10 @@ import java.util.List;
         }
 
         private static class Argument implements ActorInterfaceDescription.Method.Argument {
+            private final VariableElement mElement;
+
             @NotNull
-            private final List<? extends AnnotationMirror> mAnnotations;
+            private final List<AnnotationMirror> mAnnotations;
 
             @NotNull
             private final String mName;
@@ -241,12 +245,28 @@ import java.util.List;
             @NotNull
             private final TypeMirror mType;
 
-            /* package */ Argument(@NotNull List<? extends AnnotationMirror> annotations,
-                                   @NotNull String name,
-                                   @NotNull TypeMirror type) {
-                mName = name;
-                mType = type;
-                mAnnotations = annotations;
+            private final int mSecureLevel;
+
+            /* package */ Argument(@NotNull VariableElement element) {
+                mElement = element;
+                mName = element.getSimpleName().toString();
+                mType = element.asType();
+
+                SecureParameter secureLevel = element.getAnnotation(SecureParameter.class);
+                if (secureLevel == null) {
+                    mSecureLevel = SecureParameter.LEVEL_FULL_INFO;
+                } else {
+                    mSecureLevel = secureLevel.value();
+                }
+
+                mAnnotations = new ArrayList<>();
+                for (AnnotationMirror annotation : element.getAnnotationMirrors()) {
+                    TypeElement annotationType = (TypeElement) annotation.getAnnotationType().asElement();
+                    if (SecureParameter.class.getCanonicalName().equals(annotationType.getQualifiedName().toString())) {
+                        continue;
+                    }
+                    mAnnotations.add(annotation);
+                }
             }
 
             @NotNull
@@ -265,6 +285,17 @@ import java.util.List;
             @Override
             public List<? extends AnnotationMirror> getAnnotations() {
                 return mAnnotations;
+            }
+
+            @Override
+            public int getSecureLevel() {
+                return mSecureLevel;
+            }
+
+            void validate(List<GenerationError> errors) {
+                if (mSecureLevel < SecureParameter.LEVEL_NO_INFO || mSecureLevel > SecureParameter.LEVEL_FULL_INFO) {
+                    errors.add(new GenerationError(GenerationError.ER0011, mElement));
+                }
             }
         }
     }

@@ -34,7 +34,7 @@ import javax.tools.Diagnostic;
     /* package */ static final String ER0008 = "Only packages can be annotated by @ActorsPackage annotation";
     /* package */ static final String ER0009 = "Only one package can be marked by @ActorsPackage";
     /* package */ static final String ER0010 = "You MUST mark package which will contain actors builder by @ActorsPackage annotation";
-
+    /* package */ static final String ER0011 = "Unsupported security level for parameter";
 
     final boolean isError;
 

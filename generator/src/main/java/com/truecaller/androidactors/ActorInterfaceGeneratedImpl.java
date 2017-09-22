@@ -260,17 +260,23 @@ import java.util.List;
 
             if (!arguments.isEmpty()) {
                 Iterator<Argument> it = arguments.iterator();
-                result.append(" + ").append(it.next().name);
+                result.append(" + ");
+                appendParameterValue(result, it.next());
                 while (it.hasNext()) {
-                    result.append(" + \",\" + ").append(it.next().name);
+                    result.append(" + \",\" + ");
+                    appendParameterValue(result, it.next());
                 }
-
             }
             result.append(" + \")\"");
 
             method.addStatement(result.toString());
 
             return method.build();
+        }
+
+        private void appendParameterValue(@NonNull StringBuilder result, @NonNull Argument argument) {
+            result.append("logParam(").append(argument.name).append(",");
+            result.append(argument.secureLevel).append(")");
         }
 
         static class Argument {
@@ -282,16 +288,20 @@ import java.util.List;
 
             /* package */ final List<? extends AnnotationMirror> annotations;
 
+            /* package */ final int secureLevel;
+
             /* package */ Argument(@NotNull ActorInterfaceDescription.Method.Argument argument) {
                 name = argument.getName();
                 type = TypeName.get(argument.getType());
                 annotations = argument.getAnnotations();
+                secureLevel = argument.getSecureLevel();
             }
 
             ParameterSpec generate() {
                 ParameterSpec.Builder builder = ParameterSpec.builder(type, name);
                 for (AnnotationMirror annotation : annotations) {
-                    builder.addAnnotation(AnnotationSpec.get(annotation));
+                    AnnotationSpec spec = AnnotationSpec.get(annotation);
+                    builder.addAnnotation(spec);
                 }
                 return builder.build();
             }
