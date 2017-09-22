@@ -21,9 +21,14 @@ import android.support.annotation.Nullable;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
+import org.junit.runner.RunWith;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
+import org.robolectric.RobolectricTestRunner;
+import org.robolectric.annotation.Config;
 
+@RunWith(RobolectricTestRunner.class)
+@Config(manifest = Config.NONE)
 public class MessageBaseTest {
     @Mock
     private ActorInvokeException mException;
@@ -45,14 +50,114 @@ public class MessageBaseTest {
 
     @Test(expected = AssertionError.class)
     public void verifyResult_throw_nullResult() {
-        MessageBase<Object, Object> message = new MockMessageBase<>(mException) ;
+        MessageBase<Object, Object> message = new MockMessageBase<>(mException);
         message.verifyResult(null);
     }
 
     @Test
     public void verifyResult_returnSame_nonNullResult() {
-        MessageBase<Object, Object> message = new MockMessageBase<>(mException) ;
+        MessageBase<Object, Object> message = new MockMessageBase<>(mException);
         Assert.assertSame(mPromise, message.verifyResult(mPromise));
+    }
+
+    @Test
+    public void logParam_value_nullNoSecurityLevel() {
+        Assert.assertEquals("null", MessageBase.logParam(null, SecureParameter.LEVEL_FULL_INFO));
+    }
+
+    @Test
+    public void logParam_value_nullLevelBasicInfo() {
+        Assert.assertEquals("null", MessageBase.logParam(null, SecureParameter.LEVEL_NULL_OR_EMPTY_STRING));
+    }
+
+    @Test
+    public void logParam_value_nullLevelNoInfo() {
+        Assert.assertEquals("<value>", MessageBase.logParam(null, SecureParameter.LEVEL_NO_INFO));
+    }
+
+    @Test
+    public void logParam_value_primitiveNoSecurityLevel() {
+        Assert.assertEquals("10", MessageBase.logParam(10, SecureParameter.LEVEL_FULL_INFO));
+    }
+
+    @Test
+    public void logParam_value_primitiveLevelBasicInfo() {
+        Assert.assertEquals("<not null value>", MessageBase.logParam(10, SecureParameter.LEVEL_NULL_OR_EMPTY_STRING));
+    }
+
+    @Test
+    public void logParam_value_primitiveLevelNoInfo() {
+        Assert.assertEquals("<value>", MessageBase.logParam(10, SecureParameter.LEVEL_NO_INFO));
+    }
+
+    @Test
+    public void logParam_value_objectNoSecurityLevel() {
+        Object value  = new Object() {
+            @Override
+            public String toString() {
+                return "{Test object}";
+            }
+        };
+        Assert.assertEquals("{Test object}", MessageBase.logParam(value, SecureParameter.LEVEL_FULL_INFO));
+    }
+
+    @Test
+    public void logParam_value_objectLevelBasicInfo() {
+        Object value  = new Object() {
+            @Override
+            public String toString() {
+                return "{Test object}";
+            }
+        };
+
+        Assert.assertEquals("<not null value>", MessageBase.logParam(value, SecureParameter.LEVEL_NULL_OR_EMPTY_STRING));
+    }
+
+    @Test
+    public void logParam_value_objectLevelNoInfo() {
+        Object value  = new Object() {
+            @Override
+            public String toString() {
+                return "{Test object}";
+            }
+        };
+        Assert.assertEquals("<value>", MessageBase.logParam(value, SecureParameter.LEVEL_NO_INFO));
+    }
+
+    @Test
+    public void logParam_value_notEmptyCharSequenceNoSecurityLevel() {
+        StringBuilder value = new StringBuilder("Test string");
+        Assert.assertEquals("'Test string'", MessageBase.logParam(value, SecureParameter.LEVEL_FULL_INFO));
+    }
+
+    @Test
+    public void logParam_value_notEmptyCharSequenceLevelBasicInfo() {
+        StringBuilder value = new StringBuilder("Test string");
+        Assert.assertEquals("<not empty string>", MessageBase.logParam(value, SecureParameter.LEVEL_NULL_OR_EMPTY_STRING));
+    }
+
+    @Test
+    public void logParam_value_notEmptyCharSequenceLevelNoInfo() {
+        StringBuilder value = new StringBuilder("Test string");
+        Assert.assertEquals("<value>", MessageBase.logParam(value, SecureParameter.LEVEL_NO_INFO));
+    }
+
+    @Test
+    public void logParam_value_emptyCharSequenceNoSecurityLevel() {
+        StringBuilder value = new StringBuilder();
+        Assert.assertEquals("''", MessageBase.logParam(value, SecureParameter.LEVEL_FULL_INFO));
+    }
+
+    @Test
+    public void logParam_value_emptyCharSequenceLevelBasicInfo() {
+        StringBuilder value = new StringBuilder();
+        Assert.assertEquals("''", MessageBase.logParam(value, SecureParameter.LEVEL_NULL_OR_EMPTY_STRING));
+    }
+
+    @Test
+    public void logParam_value_emptyCharSequenceLevelNoInfo() {
+        StringBuilder value = new StringBuilder();
+        Assert.assertEquals("<value>", MessageBase.logParam(value, SecureParameter.LEVEL_NO_INFO));
     }
 
     private static class MockMessageBase<T, R> extends MessageBase<T, R> {

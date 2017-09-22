@@ -54,8 +54,8 @@ public abstract class MessageBase<T, R> implements Message<T, R> {
             return "null";
         }
 
-        if (parameter instanceof String) {
-            if (TextUtils.isEmpty((String) parameter)) {
+        if (parameter instanceof CharSequence) {
+            if (TextUtils.isEmpty((CharSequence) parameter)) {
                 return "''";
             }
 
