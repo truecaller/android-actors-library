@@ -139,7 +139,7 @@ public class ActorServiceTest {
     }
 
     @Test
-    public void onStartCommand_START_NOT_STICKY_allways() {
+    public void onStartCommand_START_NOT_STICKY_always() {
         ActorService service = createService();
         Assert.assertEquals(Service.START_NOT_STICKY, service.onStartCommand(new Intent(), 0, 10));
     }

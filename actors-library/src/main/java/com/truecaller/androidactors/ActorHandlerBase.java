@@ -18,6 +18,7 @@ package com.truecaller.androidactors;
 
 import android.os.Handler;
 import android.os.Looper;
+import android.os.Message;
 import android.os.PowerManager;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
@@ -59,7 +60,7 @@ import android.support.annotation.VisibleForTesting;
     }
 
     @Override
-    public void handleMessage(android.os.Message msg) {
+    public void handleMessage(@NonNull Message msg) {
         switch (msg.what) {
             case MSG_TRANSACTION:
                 handleTransaction((Transaction) msg.obj, msg.arg1);
