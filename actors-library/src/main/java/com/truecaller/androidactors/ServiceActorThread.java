@@ -82,7 +82,7 @@ import java.util.Queue;
 
         private boolean mRestartAttempt;
 
-        private final Queue<ActorService.Transaction> mTransactionsQueue = new ArrayDeque<>();
+        private final Queue<Transaction> mTransactionsQueue = new ArrayDeque<>();
 
         private MessageSenderProxy(@NonNull Context context, @NonNull FailureHandler failureHandler,
                                    @NonNull Class<? extends ActorService> service, @NonNull T actorImpl) {
@@ -94,7 +94,7 @@ import java.util.Queue;
 
         @Override
         public void deliver(@NonNull Message message) {
-            ActorService.Transaction transaction = ActorService.Transaction.obtain(mActorImpl, message, mFailureHandler);
+            Transaction transaction = Transaction.<T>obtain(mActorImpl, message, mFailureHandler);
             final RemoteMessageSender sender;
 
             synchronized (this) {
@@ -128,7 +128,7 @@ import java.util.Queue;
                 return;
             }
             // Deliver queued messages
-            ActorService.Transaction transaction;
+            Transaction transaction;
             while ((transaction = mTransactionsQueue.poll()) != null) {
                 sender.deliver(transaction);
             }

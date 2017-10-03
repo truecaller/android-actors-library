@@ -22,8 +22,8 @@ targetCompatibility = JavaVersion.VERSION_1_7
 
 dependencies {
     testCompile group: 'junit', name: 'junit', version: '4.12'
-    testCompile group: 'org.robolectric', name: 'robolectric', version: '3.3.2'
-    testCompile group: 'org.mockito', name: 'mockito-all', version: '1.10.19'
+    testCompile group: 'org.robolectric', name: 'robolectric', version: '3.4.2'
+    testCompile group: 'org.mockito', name: 'mockito-core', version: '2.10.0'
     testCompile rootProject.androidJar
 
     compile group: 'com.android.support', name: 'support-annotations', version:'25.3.1'

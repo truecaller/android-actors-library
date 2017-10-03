@@ -23,7 +23,6 @@ import android.content.Context;
 import android.content.Intent;
 import android.os.Binder;
 import android.os.Build;
-import android.os.Handler;
 import android.os.HandlerThread;
 import android.os.IBinder;
 import android.os.IInterface;
@@ -32,8 +31,6 @@ import android.os.PowerManager;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 import android.support.annotation.VisibleForTesting;
-
-import java.util.concurrent.TimeUnit;
 
 /**
  * Base Service for all actor threads that are going to be covered by an Android Service.
@@ -53,9 +50,6 @@ import java.util.concurrent.TimeUnit;
 public class ActorService extends Service {
 
     /* package */ static final String LOCAL_SENDER_INTERFACE = "ServiceMessageSender";
-
-    private static final int MSG_TRANSACTION = 1;
-    private static final int MSG_POISON_PILL = 2;
 
     @NonNull
     private final String mServiceName;
@@ -126,7 +120,7 @@ public class ActorService extends Service {
             wl.setReferenceCounted(false);
         }
 
-        ServiceMessageSender messageSender = new ServiceMessageSender(new ActorHandler(mThread.getLooper(), mStopDelay, wl));
+        ServiceMessageSender messageSender = new ServiceMessageSender(new ServiceActorHandler(mThread.getLooper(), mStopDelay, wl));
         mBinder = new Binder();
         mBinder.attachInterface(messageSender, LOCAL_SENDER_INTERFACE);
     }
@@ -147,94 +141,11 @@ public class ActorService extends Service {
         mThread.quit();
     }
 
-    private class ActorHandler extends Handler {
-
-        @Nullable
-        private final PowerManager.WakeLock mWakeLock;
-
-        private final long mStopDelay;
-
-        private volatile int mLastId = 0;
-
-        /* package */ ActorHandler(Looper looper, long stopDelay, @Nullable PowerManager.WakeLock wakeLock) {
-            super(looper);
-            mWakeLock = wakeLock;
-            mStopDelay = stopDelay;
-        }
-
-        /* package */ boolean sendTransaction(@NonNull Transaction transaction) {
-            final int id;
-            synchronized (this) {
-                if (mLastId == -1) {
-                    return false;
-                }
-                id = ++mLastId;
-            }
-
-            return sendMessage(obtainMessage(MSG_TRANSACTION, id, 0, transaction));
-        }
-
-        @Override
-        public void handleMessage(android.os.Message msg) {
-            switch (msg.what) {
-                case MSG_TRANSACTION:
-                    handleTransaction((Transaction) msg.obj, msg.arg1);
-                    break;
-                case MSG_POISON_PILL:
-                    handlePoisonPill(msg.arg1);
-                    break;
-            }
-        }
-
-        @SuppressWarnings("unchecked")
-        private void handleTransaction(@NonNull Transaction transaction, int id) {
-            acquireWakelock();
-            try {
-                try {
-                    transaction.message.invoke(transaction.impl);
-                } catch (Throwable e) {
-                    ActorInvokeException call = transaction.message.exception();
-                    call.initCause(e);
-                    transaction.failureHandler.onUncaughtException(transaction.impl, transaction.message, call);
-                }
-            } finally {
-                releaseWakelock();
-                transaction.recycle();
-            }
-
-            removeMessages(MSG_POISON_PILL);
-            sendMessageDelayed(obtainMessage(MSG_POISON_PILL, id, 0), mStopDelay);
-        }
-
-        private void handlePoisonPill(int id) {
-            synchronized (this) {
-                if (mLastId == id) {
-                    stopSelf();
-                    mLastId = -1;
-                }
-            }
-        }
-
-        private void acquireWakelock() {
-            if (mWakeLock == null) {
-                return;
-            }
-            mWakeLock.acquire();
-        }
-
-        private void releaseWakelock() {
-            if (mWakeLock == null) {
-                return;
-            }
-            mWakeLock.release();
-        }
-    }
-
     /* package */ class ServiceMessageSender implements RemoteMessageSender {
         @NonNull
-        private final ActorHandler mHandler;
+        private final ActorHandlerBase mHandler;
 
-        /* package */ ServiceMessageSender(@NonNull ActorHandler handler) {
+        /* package */ ServiceMessageSender(@NonNull ActorHandlerBase handler) {
             mHandler = handler;
         }
 
@@ -253,71 +164,14 @@ public class ActorService extends Service {
         boolean deliver(@NonNull Transaction transaction);
     }
 
-    /* package */ static class Transaction {
-        @VisibleForTesting
-        /* package */ static final int MAX_POOL_SIZE = 5;
-
-        Message message;
-
-        Object impl;
-
-        FailureHandler failureHandler;
-
-        @VisibleForTesting
-        @Nullable
-        /* package */ Transaction next;
-
-        private static Transaction sTop = null;
-
-        private static int sPoolSize = 0;
-
-        private Transaction() {
+    private class ServiceActorHandler extends ActorHandlerBase {
+        ServiceActorHandler(Looper looper, long stopDelay, @Nullable PowerManager.WakeLock wakeLock) {
+            super(looper, stopDelay, wakeLock);
         }
 
-        /* package */ void recycle() {
-            message = null;
-            impl = null;
-            failureHandler = null;
-
-            synchronized (Transaction.class) {
-                if (sPoolSize < MAX_POOL_SIZE) {
-                    next = sTop;
-                    sTop = this;
-                    ++sPoolSize;
-                }
-            }
-        }
-
-        @NonNull
-        /* package */ static <T> Transaction obtain(@NonNull T impl, @NonNull Message<T, ?> message,
-                                                    @NonNull FailureHandler failureHandler) {
-            Transaction transaction = obtain();
-            transaction.impl = impl;
-            transaction.message = message;
-            transaction.failureHandler = failureHandler;
-            return transaction;
-        }
-
-        @VisibleForTesting
-        /* package */ static void clearPool() {
-            synchronized (Transaction.class) {
-                sTop = null;
-                sPoolSize = 0;
-            }
-        }
-
-        @NonNull
-        private static Transaction obtain() {
-            synchronized (Transaction.class) {
-                if (sTop != null) {
-                    Transaction result = sTop;
-                    sTop = result.next;
-                    result.next = null;
-                    --sPoolSize;
-                    return result;
-                }
-            }
-            return new Transaction();
+        @Override
+        protected void stopThread() {
+            stopSelf();
         }
     }
 }

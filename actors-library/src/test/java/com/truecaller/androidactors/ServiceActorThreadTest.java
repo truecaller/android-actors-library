@@ -17,14 +17,12 @@
 package com.truecaller.androidactors;
 
 import android.annotation.SuppressLint;
-import android.app.Service;
 import android.content.ComponentName;
 import android.content.Intent;
 import android.content.ServiceConnection;
 import android.os.Binder;
 import android.os.IBinder;
 import android.os.RemoteException;
-import com.truecaller.androidactors.ActorService.Transaction;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
@@ -72,12 +70,6 @@ public class ServiceActorThreadTest {
         mBinder.attachInterface(mMessageSender, ActorService.LOCAL_SENDER_INTERFACE);
         Mockito.doReturn(mBinder).when(mMessageSender).asBinder();
         ShadowApplication.getInstance().setComponentNameAndServiceForBindService(name, mBinder);
-    }
-
-    @Test
-    public void basicStartRulesTest() {
-        ActorService service = Mockito.mock(ActorService.class, Mockito.CALLS_REAL_METHODS);
-        Assert.assertEquals(Service.START_NOT_STICKY, service.onStartCommand(new Intent(), 0, 10));
     }
 
     @Test
