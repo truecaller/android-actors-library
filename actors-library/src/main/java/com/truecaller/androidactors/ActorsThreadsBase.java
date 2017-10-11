@@ -40,7 +40,7 @@ public abstract class ActorsThreadsBase implements ActorsThreads {
     private final FailureHandler mFailureHandler;
 
     @Nullable
-    private static volatile ActorThread sUiThread = null;
+    private volatile ActorThread mUiThread = null;
 
     public ActorsThreadsBase(@NonNull ProxyFactory proxyFactory) {
         this(proxyFactory, new CrashEarlyFailureHandler());
@@ -54,12 +54,12 @@ public abstract class ActorsThreadsBase implements ActorsThreads {
     @Override
     @NonNull
     public ActorThread ui() {
-        ActorThread thread = sUiThread;
+        ActorThread thread = mUiThread;
         if (thread == null) {
-            synchronized (ActorsThreadsBase.class) {
-                if ((thread = sUiThread) == null) {
+            synchronized (mProxyFactory) {
+                if ((thread = mUiThread) == null) {
                     thread = createThread(Looper.getMainLooper());
-                    sUiThread = thread;
+                    mUiThread = thread;
                 }
             }
         }
