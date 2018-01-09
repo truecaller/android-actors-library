@@ -86,8 +86,8 @@ public abstract class ActorsThreadsBase implements ActorsThreads {
 
     @Override
     @NonNull
-    public ActorThread createThread(@NonNull Context context, @NonNull Class<? extends ActorService> service) {
-        return new ServiceActorThread(context, mProxyFactory, mFailureHandler, service);
+    public ActorThread createThread(@NonNull Context context, @NonNull Class<? extends ActorService> service, int jobId) {
+        return new ServiceActorThread(context, mProxyFactory, mFailureHandler, service, jobId);
     }
 
     @Override

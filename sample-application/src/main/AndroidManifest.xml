@@ -35,7 +35,14 @@
             </intent-filter>
         </activity>
 
-        <service android:name=".NetworkService" />
+        <service android:name=".NetworkService"
+                 android:permission="android.permission.BIND_JOB_SERVICE"/>
+
+        <receiver android:name=".SyncBroadcast">
+            <intent-filter>
+                <action android:name="com.truecaller.actorssampleapplication.REFRESH" />
+            </intent-filter>
+        </receiver>
     </application>
 
 </manifest>

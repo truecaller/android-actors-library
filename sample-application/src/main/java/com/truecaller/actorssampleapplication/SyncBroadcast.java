@@ -16,14 +16,25 @@
 
 package com.truecaller.actorssampleapplication;
 
-import android.support.annotation.NonNull;
-import dagger.Component;
+import android.content.BroadcastReceiver;
+import android.content.Context;
+import android.content.Intent;
+import com.truecaller.androidactors.ActorRef;
 
-import javax.inject.Singleton;
+import javax.inject.Inject;
 
-@Singleton
-@Component(modules = AppModule.class)
-public interface ObjectsGraph {
-    void inject(@NonNull MainActivity activity);
-    void inject(@NonNull SyncBroadcast broadcast);
+public class SyncBroadcast extends BroadcastReceiver {
+
+    @Inject
+    /* package */ ActorRef<NetworkManager> mNetworkManager;
+
+    @Inject
+    /* package */ ActorRef<FeedStorage> mFeedStorage;
+
+    @Override
+    public void onReceive(Context context, Intent intent) {
+        SampleApplication.graph().inject(this);
+
+        mNetworkManager.tell().fetch(BuildConfig.BLOG_URI).then(e -> mFeedStorage.tell().save(e));
+    }
 }

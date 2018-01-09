@@ -37,7 +37,7 @@ public interface ActorsThreads {
     ActorThread createThread(@NonNull Looper looper);
 
     @NonNull
-    ActorThread createThread(@NonNull Context context, @NonNull Class<? extends ActorService> service);
+    ActorThread createThread(@NonNull Context context, @NonNull Class<? extends ActorService> service, int jobId);
 
     @NonNull
     ActorThread createThread(@NonNull Executor executor);

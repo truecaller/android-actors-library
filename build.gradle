@@ -18,7 +18,7 @@ if (!System.getenv().containsKey("ANDROID_HOME")) {
     throw new RuntimeException("Setup ANDROID_HOME enviroment variable with path to android SDK")
 }
 
-project.ext["androidJar"] = fileTree(dir: "${System.getenv("ANDROID_HOME")}/platforms/android-25/", include: ['android.jar'])
+project.ext["androidJar"] = fileTree(dir: "${System.getenv("ANDROID_HOME")}/platforms/android-26/", include: ['android.jar'])
 
 buildscript {
     repositories {

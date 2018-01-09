@@ -32,6 +32,8 @@ import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 import android.support.annotation.VisibleForTesting;
 
+import java.util.concurrent.Callable;
+
 /**
  * Base Service for all actor threads that are going to be covered by an Android Service.
  * It will manage the background thread for the actor, the service lifecycle
@@ -41,7 +43,7 @@ import android.support.annotation.VisibleForTesting;
  * the queue) and does not use wake locks. You can change this behaviour by providing
  * constructor parameters.
  *
- * For details read {@link ActorsThreads#createThread(Context, Class)}
+ * For details read {@link ActorsThreads#createThread(Context, Class, int)}
  *
  * NOTE: This service can't work in remote process
  */
@@ -50,6 +52,7 @@ import android.support.annotation.VisibleForTesting;
 public class ActorService extends Service {
 
     /* package */ static final String LOCAL_SENDER_INTERFACE = "ServiceMessageSender";
+    /* package */ static final String ACTION_DIRECT_START = "com.truecaller.androidactors.ActorService";
 
     @NonNull
     private final String mServiceName;
@@ -63,6 +66,9 @@ public class ActorService extends Service {
 
     @Nullable
     private Binder mBinder;
+
+    @Nullable
+    private ActorJobEngine mJobEngine = null;
 
     /**
      * Service constructor
@@ -102,7 +108,12 @@ public class ActorService extends Service {
 
     @Override
     public IBinder onBind(Intent intent) {
-        return mBinder;
+        // If service was started on pre-Oreo or it was direct service start (not from JobScheduler)
+        // we return binder which can be converted to commands executor
+        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.O || ACTION_DIRECT_START.equals(intent.getAction())) {
+            return getLegacyBinder();
+        }
+        return getBinder();
     }
 
     @Override
@@ -139,6 +150,29 @@ public class ActorService extends Service {
             binder.attachInterface(null, null);
         }
         mThread.quit();
+
+        if (mJobEngine != null) {
+            mJobEngine.reportServerStop();
+        }
+    }
+
+    private IBinder getLegacyBinder() {
+        return mBinder;
+    }
+
+    @TargetApi(Build.VERSION_CODES.O)
+    private IBinder getBinder() {
+        ActorJobEngine engine = mJobEngine;
+        if (engine == null) {
+            engine = JobSchedulerHelper.createJobEngine(this, new Callable<IBinder>() {
+                @Override
+                public IBinder call() {
+                    return mBinder;
+                }
+            });
+        }
+        mJobEngine = engine;
+        return engine.getBinder();
     }
 
     /* package */ class ServiceMessageSender implements RemoteMessageSender {
@@ -173,5 +207,10 @@ public class ActorService extends Service {
         protected void stopThread() {
             stopSelf();
         }
+    }
+
+    /* package */ interface ActorJobEngine {
+        void reportServerStop();
+        IBinder getBinder();
     }
 }

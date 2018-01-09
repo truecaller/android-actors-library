@@ -26,13 +26,19 @@ import android.os.IBinder;
 import android.os.RemoteException;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
+import android.util.SparseArray;
 import com.truecaller.androidactors.ActorService.RemoteMessageSender;
 
+import java.lang.ref.WeakReference;
 import java.util.ArrayDeque;
 import java.util.Queue;
 
 @TargetApi(Build.VERSION_CODES.ICE_CREAM_SANDWICH)
 /* package */ class ServiceActorThread implements ActorThread {
+
+    private static final SparseArray<WeakReference<ServiceConnection>> sSenders = new SparseArray<>();
+
+    private final int mJobId;
 
     @NonNull
     private final Context mContext;
@@ -47,23 +53,36 @@ import java.util.Queue;
     private final Class<? extends ActorService> mService;
 
     /* package */ ServiceActorThread(@NonNull Context context, @NonNull ProxyFactory proxyFactory,
-                                     @NonNull FailureHandler failureHandler, @NonNull Class<? extends ActorService> service) {
+                                     @NonNull FailureHandler failureHandler, @NonNull Class<? extends ActorService> service,
+                                     int jobId) {
         mContext = context.getApplicationContext();
         mProxyFactory = proxyFactory;
         mFailureHandler = failureHandler;
         mService = service;
+        mJobId = jobId;
     }
 
     @NonNull
     @Override
     public <T> ActorRef<T> bind(@NonNull Class<T> cls, @NonNull T impl) {
-        MessageSenderProxy<T> postman = new MessageSenderProxy<>(mContext, mFailureHandler, mService, impl);
+        ServiceMessageSenderProxy<T> postman = new ServiceMessageSenderProxy<>(mContext, mFailureHandler, mService, mJobId, impl);
         T instance = mProxyFactory.newProxy(cls, postman);
         return new ActorRefImpl<>(instance);
     }
 
+    @Nullable
+    /* package */ static ServiceConnection getConnectionForJob(int jobId) {
+        WeakReference<ServiceConnection> ref = sSenders.get(jobId);
+        if (ref != null) {
+            return ref.get();
+        }
+        return null;
+    }
+
     @TargetApi(Build.VERSION_CODES.ICE_CREAM_SANDWICH)
-    private static class MessageSenderProxy<T> implements MessageSender, ServiceConnection {
+    private static class ServiceMessageSenderProxy<T> implements MessageSender, ServiceConnection {
+
+        private final int mJobId;
 
         @NonNull
         private final Context mContext;
@@ -84,11 +103,14 @@ import java.util.Queue;
 
         private final Queue<Transaction> mTransactionsQueue = new ArrayDeque<>();
 
-        private MessageSenderProxy(@NonNull Context context, @NonNull FailureHandler failureHandler,
-                                   @NonNull Class<? extends ActorService> service, @NonNull T actorImpl) {
+        private ServiceMessageSenderProxy(@NonNull Context context, @NonNull FailureHandler failureHandler,
+                                          @NonNull Class<? extends ActorService> service, int jobId,
+                                          @NonNull T actorImpl) {
             mContext = context;
             mFailureHandler = failureHandler;
             mIntent = new Intent(mContext, service);
+            mIntent.setAction(ActorService.ACTION_DIRECT_START);
+            mJobId = jobId;
             mActorImpl = actorImpl;
         }
 
@@ -143,8 +165,15 @@ import java.util.Queue;
         }
 
         private void startService() {
-            mContext.startService(mIntent);
-            mContext.bindService(mIntent, this, Context.BIND_IMPORTANT);
+            try {
+                mContext.startService(mIntent);
+                mContext.bindService(mIntent, this, Context.BIND_IMPORTANT);
+            } catch (IllegalStateException e) {
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                    sSenders.put(mJobId, new WeakReference<ServiceConnection>(this));
+                    JobSchedulerHelper.scheduleJob(mContext, mJobId, mIntent.getComponent());
+                }
+            }
         }
 
         private synchronized void stopActorService() {
