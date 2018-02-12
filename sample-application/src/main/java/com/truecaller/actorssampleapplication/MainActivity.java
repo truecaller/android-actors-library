@@ -40,9 +40,6 @@ import com.truecaller.androidactors.ResultListener;
 import javax.inject.Inject;
 
 public class MainActivity extends AppCompatActivity implements LoaderManager.LoaderCallbacks<FeedEntryCursor> {
-
-    private static final Uri BLOG_URI = Uri.parse("https://android-developers.googleblog.com/feeds/posts/default");
-
     @Inject
     /* package */ ActorRef<NetworkManager> mNetworkManager;
 
@@ -69,7 +66,7 @@ public class MainActivity extends AppCompatActivity implements LoaderManager.Loa
     }
 
     private void onRefreshClicked(View v) {
-        mNetworkManager.tell().fetch(BLOG_URI).then(e -> mFeedStorage.tell().save(e));
+        mNetworkManager.tell().fetch(BuildConfig.BLOG_URI).then(e -> mFeedStorage.tell().save(e));
     }
 
     @Override

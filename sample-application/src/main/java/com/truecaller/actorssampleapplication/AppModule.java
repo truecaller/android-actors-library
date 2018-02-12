@@ -89,7 +89,7 @@ public class AppModule {
     @Named(THREAD_NETWORK)
     @NonNull
     /* package */ ActorThread provideNetworkThread(@NonNull Context context, @NonNull ActorsThreads actors) {
-        return actors.createThread(context, NetworkService.class);
+        return actors.createThread(context, NetworkService.class, 1);
     }
 
     @Singleton

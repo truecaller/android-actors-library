@@ -29,15 +29,17 @@ apply plugin: 'com.android.application'
 apply plugin: 'me.tatarka.retrolambda'
 
 android {
-    compileSdkVersion 25
+    compileSdkVersion 26
     buildToolsVersion "25.0.2"
 
     defaultConfig {
         applicationId "com.truecaller.actorssampleapplication"
         minSdkVersion 14
-        targetSdkVersion 24
+        targetSdkVersion 26
         versionCode 1
         versionName "1.0"
+
+        buildConfigField("android.net.Uri", "BLOG_URI", "android.net.Uri.parse(\"https://android-developers.googleblog.com/feeds/posts/default\")")
     }
     buildTypes {
         release {

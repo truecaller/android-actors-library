@@ -76,7 +76,7 @@ public class ServiceActorThreadTest {
     public void deliverMessageTest() {
         ShadowApplication application = ShadowApplication.getInstance();
         ServiceActorThread thread = new ServiceActorThread(application.getApplicationContext(), mProxyFactory,
-                mFailureHandler, ActorService.class);
+                mFailureHandler, ActorService.class, 1);
 
         ActorRef<Runnable> ref = thread.bind(Runnable.class, mActorImpl);
         Assert.assertSame(mProxy, ref.tell());
@@ -175,7 +175,7 @@ public class ServiceActorThreadTest {
         ComponentName componentName = new ComponentName(application.getApplicationContext(), ActorService.class);
         Binder binder = new Binder();
         ServiceActorThread thread = new ServiceActorThread(application.getApplicationContext(), mProxyFactory,
-                mFailureHandler, ActorService.class);
+                mFailureHandler, ActorService.class, 1);
 
         ActorRef<Runnable> ref = thread.bind(Runnable.class, mActorImpl);
         Assert.assertSame(mProxy, ref.tell());
@@ -219,7 +219,7 @@ public class ServiceActorThreadTest {
         IBinder binder = Mockito.mock(IBinder.class);
         Mockito.doThrow(new RemoteException()).when(binder).getInterfaceDescriptor();
         ServiceActorThread thread = new ServiceActorThread(application.getApplicationContext(), mProxyFactory,
-                mFailureHandler, ActorService.class);
+                mFailureHandler, ActorService.class, 1);
 
         ActorRef<Runnable> ref = thread.bind(Runnable.class, mActorImpl);
         Assert.assertSame(mProxy, ref.tell());
