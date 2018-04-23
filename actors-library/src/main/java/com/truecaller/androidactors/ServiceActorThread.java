@@ -103,6 +103,8 @@ import java.util.Queue;
 
         private final Queue<Transaction> mTransactionsQueue = new ArrayDeque<>();
 
+        private boolean mServiceBound;
+
         private ServiceMessageSenderProxy(@NonNull Context context, @NonNull FailureHandler failureHandler,
                                           @NonNull Class<? extends ActorService> service, int jobId,
                                           @NonNull T actorImpl) {
@@ -162,13 +164,15 @@ import java.util.Queue;
         @Override
         public synchronized void onServiceDisconnected(ComponentName name) {
             mSender = null;
+            mServiceBound = false;
         }
 
         private void startService() {
             try {
                 mContext.startService(mIntent);
-                mContext.bindService(mIntent, this, Context.BIND_IMPORTANT);
+                mServiceBound = mContext.bindService(mIntent, this, Context.BIND_IMPORTANT);
             } catch (IllegalStateException e) {
+                mServiceBound = false;
                 if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
                     sSenders.put(mJobId, new WeakReference<ServiceConnection>(this));
                     JobSchedulerHelper.scheduleJob(mContext, mJobId, mIntent.getComponent());
@@ -177,8 +181,13 @@ import java.util.Queue;
         }
 
         private synchronized void stopActorService() {
-            mContext.unbindService(this);
+            if (mServiceBound) {
+                mContext.unbindService(this);
+            }
             mContext.stopService(mIntent);
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                JobSchedulerHelper.cancelJob(mContext, mJobId);
+            }
             mSender = null;
         }
 
