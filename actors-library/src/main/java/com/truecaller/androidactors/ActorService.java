@@ -205,6 +205,9 @@ public class ActorService extends Service {
 
         @Override
         protected void stopThread() {
+            if (mJobEngine != null) {
+                mJobEngine.reportServerStop();
+            }
             stopSelf();
         }
     }

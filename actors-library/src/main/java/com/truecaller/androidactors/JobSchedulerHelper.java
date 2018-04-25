@@ -46,6 +46,13 @@ public abstract class JobSchedulerHelper {
         scheduler.schedule(job);
     }
 
+    public static void cancelJob(@NonNull Context context, int id) {
+        JobScheduler scheduler = (JobScheduler) context.getSystemService(Context.JOB_SCHEDULER_SERVICE);
+        if (scheduler != null) {
+            scheduler.cancel(id);
+        }
+    }
+
     @NonNull
     public static ActorService.ActorJobEngine createJobEngine(@NonNull Service service, @NonNull Callable<IBinder> binder) {
         return new ActorJobServiceEngine(service, binder);
