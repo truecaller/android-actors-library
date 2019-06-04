@@ -27,6 +27,7 @@ import android.os.RemoteException;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 import android.util.SparseArray;
+
 import com.truecaller.androidactors.ActorService.RemoteMessageSender;
 
 import java.lang.ref.WeakReference;
@@ -182,9 +183,15 @@ import java.util.Queue;
 
         private synchronized void stopActorService() {
             if (mServiceBound) {
-                mContext.unbindService(this);
+                try {
+                    mContext.unbindService(this);
+                } catch (IllegalStateException ignored) {
+                }
             }
-            mContext.stopService(mIntent);
+            try {
+                mContext.stopService(mIntent);
+            } catch (IllegalStateException ignored) {
+            }
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
                 JobSchedulerHelper.cancelJob(mContext, mJobId);
             }
