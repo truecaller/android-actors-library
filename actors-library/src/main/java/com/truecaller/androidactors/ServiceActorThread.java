@@ -185,13 +185,10 @@ import java.util.Queue;
             if (mServiceBound) {
                 try {
                     mContext.unbindService(this);
-                } catch (IllegalStateException ignored) {
+                } catch (IllegalArgumentException ignored) {
                 }
             }
-            try {
-                mContext.stopService(mIntent);
-            } catch (IllegalStateException ignored) {
-            }
+            mContext.stopService(mIntent);
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
                 JobSchedulerHelper.cancelJob(mContext, mJobId);
             }
