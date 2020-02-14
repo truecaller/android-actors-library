@@ -16,7 +16,6 @@
 
 package com.truecaller.androidactors;
 
-import android.support.annotation.NonNull;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -33,6 +32,8 @@ import javax.lang.model.type.TypeKind;
 import javax.lang.model.type.TypeMirror;
 import java.util.ArrayList;
 import java.util.List;
+
+import androidx.annotation.NonNull;
 
 /* package */ class ActorInterfaceDescriptionImpl implements ActorInterfaceDescription {
 

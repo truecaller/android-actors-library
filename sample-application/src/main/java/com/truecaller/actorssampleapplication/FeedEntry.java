@@ -17,9 +17,6 @@
 package com.truecaller.actorssampleapplication;
 
 import android.net.Uri;
-import android.os.Parcel;
-import android.os.Parcelable;
-import android.support.annotation.NonNull;
 
 /**
  * This class represents a single entry (post) in the XML feed.

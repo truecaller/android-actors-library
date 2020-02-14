@@ -20,10 +20,6 @@ import android.app.LoaderManager;
 import android.content.Context;
 import android.content.Loader;
 import android.database.Cursor;
-import android.net.Uri;
-import android.support.annotation.NonNull;
-import android.support.annotation.Nullable;
-import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -35,9 +31,11 @@ import com.truecaller.androidactors.ActorCallLoader;
 import com.truecaller.androidactors.ActorRef;
 import com.truecaller.androidactors.ActorsThreads;
 import com.truecaller.androidactors.Promise;
-import com.truecaller.androidactors.ResultListener;
 
 import javax.inject.Inject;
+
+import androidx.annotation.NonNull;
+import androidx.appcompat.app.AppCompatActivity;
 
 public class MainActivity extends AppCompatActivity implements LoaderManager.LoaderCallbacks<FeedEntryCursor> {
     @Inject

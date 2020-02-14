@@ -16,8 +16,8 @@
 
 package com.truecaller.androidactors;
 
-import android.support.annotation.NonNull;
-import android.support.annotation.Nullable;
+import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
 
 /**
  * Message to actor. You don't need to create classes that implements this interface manually.

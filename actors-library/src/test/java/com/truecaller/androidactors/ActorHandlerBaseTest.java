@@ -18,7 +18,7 @@ package com.truecaller.androidactors;
 
 import android.content.Context;
 import android.os.PowerManager;
-import android.support.annotation.Nullable;
+import androidx.annotation.Nullable;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;

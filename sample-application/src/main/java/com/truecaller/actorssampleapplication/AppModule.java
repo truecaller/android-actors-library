@@ -18,7 +18,6 @@ package com.truecaller.actorssampleapplication;
 
 import android.content.Context;
 import android.database.sqlite.SQLiteOpenHelper;
-import android.support.annotation.NonNull;
 import android.util.Log;
 
 import com.truecaller.androidactors.ActorRef;
@@ -28,6 +27,7 @@ import com.truecaller.androidactors.ActorsThreads;
 import javax.inject.Named;
 import javax.inject.Singleton;
 
+import androidx.annotation.NonNull;
 import dagger.Module;
 import dagger.Provides;
 import okhttp3.OkHttpClient;

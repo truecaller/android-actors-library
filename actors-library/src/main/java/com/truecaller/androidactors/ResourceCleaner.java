@@ -16,7 +16,7 @@
 
 package com.truecaller.androidactors;
 
-import android.support.annotation.NonNull;
+import androidx.annotation.NonNull;
 
 /**
  * Cleaner for actor call result for cases when no one is waiting for a result

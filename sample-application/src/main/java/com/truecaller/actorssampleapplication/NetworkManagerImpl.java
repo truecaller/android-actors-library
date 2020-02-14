@@ -17,8 +17,9 @@
 package com.truecaller.actorssampleapplication;
 
 import android.net.Uri;
-import android.support.annotation.NonNull;
 import com.truecaller.androidactors.Promise;
+
+import androidx.annotation.NonNull;
 import okhttp3.OkHttpClient;
 import okhttp3.Request;
 import okhttp3.Response;

@@ -19,10 +19,10 @@ package com.truecaller.androidactors;
 import android.content.Context;
 import android.content.Loader;
 import android.os.Build;
-import android.support.annotation.MainThread;
-import android.support.annotation.NonNull;
-import android.support.annotation.Nullable;
-import android.support.annotation.RequiresApi;
+import androidx.annotation.MainThread;
+import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
+import androidx.annotation.RequiresApi;
 
 @RequiresApi(Build.VERSION_CODES.ICE_CREAM_SANDWICH)
 @MainThread
