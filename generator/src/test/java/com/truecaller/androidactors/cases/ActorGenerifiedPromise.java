@@ -16,7 +16,7 @@
 
 package com.truecaller.androidactors.cases;
 
-import android.support.annotation.NonNull;
+import androidx.annotation.NonNull;
 import com.truecaller.androidactors.Promise;
 
 public interface ActorGenerifiedPromise {

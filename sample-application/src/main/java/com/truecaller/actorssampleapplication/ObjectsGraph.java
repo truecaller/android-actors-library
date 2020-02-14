@@ -16,7 +16,7 @@
 
 package com.truecaller.actorssampleapplication;
 
-import android.support.annotation.NonNull;
+import androidx.annotation.NonNull;
 import dagger.Component;
 
 import javax.inject.Singleton;

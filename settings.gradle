@@ -15,4 +15,5 @@
  */
 
 include ':actors-library', ':generator', ':sample-application'
+include 'buildSrc'
 

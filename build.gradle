@@ -14,11 +14,18 @@
  * limitations under the License.
  */
 
-if (!System.getenv().containsKey("ANDROID_HOME")) {
-    throw new RuntimeException("Setup ANDROID_HOME enviroment variable with path to android SDK")
+import com.truecaller.gradle.SdkLocator
+
+File sdkLocationDir = SdkLocator.findSdkLocation(projectDir)
+String sdkLocation
+if (sdkLocationDir == null) {
+    throw new RuntimeException("Setup android SDK location in one of the following ways: ANDROID_HOME env variable, " +
+            "android.home system property or in local.properties file")
+} else {
+    sdkLocation = sdkLocationDir.absolutePath
 }
 
-project.ext["androidJar"] = fileTree(dir: "${System.getenv("ANDROID_HOME")}/platforms/android-26/", include: ['android.jar'])
+project.ext["androidJar"] = fileTree(dir: "${sdkLocation}/platforms/android-26/", include: ['android.jar'])
 
 buildscript {
     repositories {
@@ -28,7 +35,7 @@ buildscript {
 
 allprojects {
     group = 'com.truecaller'
-    version = "1.5.2"
+    version = "1.6.0"
 
     if (!project.hasProperty("build.isRelease")) {
         version = "$version-SNAPSHOT"
@@ -36,9 +43,10 @@ allprojects {
 
     repositories {
         mavenLocal()
-        maven { url "file://${System.getenv("ANDROID_HOME")}/extras/android/m2repository/" }
+        maven { url "file://${sdkLocation}/extras/android/m2repository/" }
         jcenter()
         mavenCentral()
+        google()
     }
 
     // Workaround for http://issues.gradle.org/browse/GRADLE-1682

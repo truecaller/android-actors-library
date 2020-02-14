@@ -16,8 +16,8 @@
 
 package com.truecaller.androidactors;
 
-import android.support.annotation.NonNull;
-import android.support.annotation.Nullable;
+import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
 
 /**
  * Promise for using in test. Will always provide result on same thread

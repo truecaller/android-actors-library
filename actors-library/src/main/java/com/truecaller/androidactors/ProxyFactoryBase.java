@@ -16,7 +16,7 @@
 
 package com.truecaller.androidactors;
 
-import android.support.annotation.NonNull;
+import androidx.annotation.NonNull;
 
 public abstract class ProxyFactoryBase implements ProxyFactory {
 

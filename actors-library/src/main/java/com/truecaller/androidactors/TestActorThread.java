@@ -16,7 +16,7 @@
 
 package com.truecaller.androidactors;
 
-import android.support.annotation.NonNull;
+import androidx.annotation.NonNull;
 
 /**
  * Special actor thread for using in tests.

@@ -16,7 +16,7 @@
 
 package com.truecaller.androidactors;
 
-import android.support.annotation.NonNull;
+import androidx.annotation.NonNull;
 import android.text.TextUtils;
 
 public abstract class MessageBase<T, R> implements Message<T, R> {

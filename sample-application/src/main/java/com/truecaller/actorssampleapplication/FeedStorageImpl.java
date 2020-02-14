@@ -23,10 +23,12 @@ import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
 import android.database.sqlite.SQLiteOpenHelper;
 import android.net.Uri;
-import android.support.annotation.NonNull;
-import android.support.annotation.Nullable;
+
 import com.truecaller.actorssampleapplication.FeedContract.Feed;
 import com.truecaller.androidactors.Promise;
+
+import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
 
 /* package */ class FeedStorageImpl implements FeedStorage {
 

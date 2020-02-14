@@ -16,7 +16,6 @@
 
 package com.truecaller.androidactors;
 
-import android.support.annotation.VisibleForTesting;
 import com.squareup.javapoet.JavaFile;
 import org.jetbrains.annotations.NotNull;
 
@@ -31,6 +30,8 @@ import javax.tools.Diagnostic.Kind;
 import java.io.IOException;
 import java.lang.annotation.Annotation;
 import java.util.Set;
+
+import androidx.annotation.VisibleForTesting;
 
 @SupportedAnnotationTypes(value = {"com.truecaller.androidactors.ActorInterface", "com.truecaller.androidactors.ActorsPackage"})
 public class ActorsProcessor extends AbstractProcessor {

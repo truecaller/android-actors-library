@@ -16,7 +16,7 @@
 
 package com.truecaller.androidactors;
 
-import android.support.annotation.Nullable;
+import androidx.annotation.Nullable;
 
 public interface ResultListener<R> {
     void onResult(@Nullable R result);

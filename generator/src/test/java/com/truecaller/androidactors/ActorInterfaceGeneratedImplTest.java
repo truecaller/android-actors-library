@@ -16,7 +16,7 @@
 
 package com.truecaller.androidactors;
 
-import android.support.annotation.NonNull;
+import androidx.annotation.NonNull;
 import com.google.common.collect.Iterables;
 import com.google.testing.compile.CompilationRule;
 import com.squareup.javapoet.ClassName;

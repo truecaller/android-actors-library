@@ -14,17 +14,8 @@
  * limitations under the License.
  */
 
-package com.truecaller.actorssampleapplication;
-
-import android.net.Uri;
-
-import com.truecaller.androidactors.ActorInterface;
-import com.truecaller.androidactors.Promise;
-
-import androidx.annotation.NonNull;
-
-@ActorInterface
-public interface NetworkManager {
-    @NonNull
-    Promise<FeedEntry[]> fetch(@NonNull Uri uri);
+plugins {
+    id 'java'
 }
+
+sourceCompatibility = 1.8
