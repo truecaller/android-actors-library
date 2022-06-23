@@ -23,12 +23,10 @@ import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
 import android.database.sqlite.SQLiteOpenHelper;
 import android.net.Uri;
-
-import com.truecaller.actorssampleapplication.FeedContract.Feed;
-import com.truecaller.androidactors.Promise;
-
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
+import com.truecaller.actorssampleapplication.FeedContract.Feed;
+import com.truecaller.androidactors.Promise;
 
 /* package */ class FeedStorageImpl implements FeedStorage {
 
@@ -73,14 +71,18 @@ import androidx.annotation.Nullable;
     @NonNull
     @Override
     public Promise<FeedEntryCursor> fetch() {
-        final SQLiteDatabase db = mHelper.getReadableDatabase();
-        @SuppressLint("Recycle")
-        Cursor cursor = db.query(Feed.TABLE, null, null, null, null, null, Feed.COLUMN_PUBLISHED + " DESC");
-        if (cursor == null) {
+        try {
+            final SQLiteDatabase db = mHelper.getReadableDatabase();
+            @SuppressLint("Recycle")
+            Cursor cursor = db.query(Feed.TABLE, null, null, null, null, null, Feed.COLUMN_PUBLISHED + " DESC");
+            if (cursor == null) {
+                return Promise.wrap(null);
+            }
+            cursor.setNotificationUri(mContentResolver, NOTIFICATION_URI);
+
+            return Promise.wrap(new FeedEntryCursorImpl(cursor), Cursor::close);
+        } catch (Exception exception) {
             return Promise.wrap(null);
         }
-        cursor.setNotificationUri(mContentResolver, NOTIFICATION_URI);
-
-        return Promise.wrap(new FeedEntryCursorImpl(cursor), Cursor::close);
     }
 }

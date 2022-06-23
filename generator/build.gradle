@@ -25,10 +25,10 @@ dependencies {
     // https://mvnrepository.com/artifact/com.intellij/annotations
     implementation group: 'com.intellij', name: 'annotations', version: '12.0'
     // https://mvnrepository.com/artifact/com.squareup/javapoet
-    implementation group: 'com.squareup', name: 'javapoet', version: '1.9.0'
+    implementation group: 'com.squareup', name: 'javapoet', version: '1.13.0'
     // https://mvnrepository.com/artifact/org.apache.commons/commons-lang3
-    implementation group: 'org.apache.commons', name: 'commons-lang3', version: '3.5'
-    implementation group: 'androidx.annotation', name: 'annotation', version: '1.1.0'
+    implementation group: 'org.apache.commons', name: 'commons-lang3', version: '3.12.0'
+    implementation group: 'androidx.annotation', name: 'annotation', version: '1.4.0'
     testImplementation group: 'junit', name: 'junit', version: '4.11'
     // https://mvnrepository.com/artifact/com.google.testing.compile/compile-testing
     testImplementation group: 'com.google.testing.compile', name: 'compile-testing', version: '0.10'
