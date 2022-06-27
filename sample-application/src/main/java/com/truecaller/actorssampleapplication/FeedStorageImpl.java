@@ -22,15 +22,12 @@ import android.content.ContentValues;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
 import android.database.sqlite.SQLiteOpenHelper;
-import android.net.Uri;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import com.truecaller.actorssampleapplication.FeedContract.Feed;
 import com.truecaller.androidactors.Promise;
 
 /* package */ class FeedStorageImpl implements FeedStorage {
-
-    private static final Uri NOTIFICATION_URI = Uri.parse("content://feed/");
 
     private final ContentResolver mContentResolver;
 
@@ -65,24 +62,18 @@ import com.truecaller.androidactors.Promise;
         } finally {
             db.endTransaction();
         }
-        mContentResolver.notifyChange(NOTIFICATION_URI, null);
     }
 
     @NonNull
     @Override
     public Promise<FeedEntryCursor> fetch() {
-        try {
-            final SQLiteDatabase db = mHelper.getReadableDatabase();
-            @SuppressLint("Recycle")
-            Cursor cursor = db.query(Feed.TABLE, null, null, null, null, null, Feed.COLUMN_PUBLISHED + " DESC");
-            if (cursor == null) {
-                return Promise.wrap(null);
-            }
-            cursor.setNotificationUri(mContentResolver, NOTIFICATION_URI);
-
-            return Promise.wrap(new FeedEntryCursorImpl(cursor), Cursor::close);
-        } catch (Exception exception) {
+        final SQLiteDatabase db = mHelper.getReadableDatabase();
+        @SuppressLint("Recycle")
+        Cursor cursor = db.query(Feed.TABLE, null, null, null, null, null, Feed.COLUMN_PUBLISHED + " DESC");
+        if (cursor == null) {
             return Promise.wrap(null);
         }
+
+        return Promise.wrap(new FeedEntryCursorImpl(cursor), Cursor::close);
     }
 }

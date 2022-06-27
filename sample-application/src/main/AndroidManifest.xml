@@ -27,7 +27,9 @@
             android:supportsRtl="true"
             android:theme="@style/AppTheme"
             android:fullBackupContent="false"
+            android:usesCleartextTraffic="true"
             android:name=".SampleApplication">
+
         <activity android:name=".MainActivity">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN"/>
@@ -40,7 +42,7 @@
 
         <receiver android:name=".SyncBroadcast">
             <intent-filter>
-                <action android:name="com.truecaller.actorssampleapplication.REFRESH" />
+                <action android:name="com.truecaller.actorssampleapplication.REFRESH"/>
             </intent-filter>
         </receiver>
     </application>
