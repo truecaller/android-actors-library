@@ -31,8 +31,8 @@ import android.util.SparseArray;
 import com.truecaller.androidactors.ActorService.RemoteMessageSender;
 
 import java.lang.ref.WeakReference;
-import java.util.ArrayDeque;
 import java.util.Queue;
+import java.util.concurrent.ConcurrentLinkedQueue;
 
 @TargetApi(Build.VERSION_CODES.ICE_CREAM_SANDWICH)
 /* package */ class ServiceActorThread implements ActorThread {
@@ -102,7 +102,7 @@ import java.util.Queue;
 
         private boolean mRestartAttempt;
 
-        private final Queue<Transaction> mTransactionsQueue = new ArrayDeque<>();
+        private final Queue<Transaction> mTransactionsQueue = new ConcurrentLinkedQueue<>();
 
         private boolean mServiceBound;
 
