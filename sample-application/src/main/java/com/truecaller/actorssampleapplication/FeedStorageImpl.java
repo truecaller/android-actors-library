@@ -22,12 +22,17 @@ import android.content.ContentValues;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
 import android.database.sqlite.SQLiteOpenHelper;
+import android.net.Uri;
+
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
+
 import com.truecaller.actorssampleapplication.FeedContract.Feed;
 import com.truecaller.androidactors.Promise;
 
 /* package */ class FeedStorageImpl implements FeedStorage {
+
+    private static final Uri NOTIFICATION_URI = Uri.parse("content://com.truecaller.actorssampleapplication.FeedContentProvider/feed/");
 
     private final ContentResolver mContentResolver;
 
@@ -62,6 +67,7 @@ import com.truecaller.androidactors.Promise;
         } finally {
             db.endTransaction();
         }
+        mContentResolver.notifyChange(NOTIFICATION_URI, null);
     }
 
     @NonNull
@@ -73,6 +79,7 @@ import com.truecaller.androidactors.Promise;
         if (cursor == null) {
             return Promise.wrap(null);
         }
+        cursor.setNotificationUri(mContentResolver, NOTIFICATION_URI);
 
         return Promise.wrap(new FeedEntryCursorImpl(cursor), Cursor::close);
     }

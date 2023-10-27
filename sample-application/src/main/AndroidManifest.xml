@@ -45,6 +45,13 @@
                 <action android:name="com.truecaller.actorssampleapplication.REFRESH"/>
             </intent-filter>
         </receiver>
+
+        <provider
+            android:name="com.truecaller.actorssampleapplication.FeedContentProvider"
+            android:authorities="com.truecaller.actorssampleapplication.FeedContentProvider"
+            android:exported="false"
+            android:grantUriPermissions="true" />
+
     </application>
 
 </manifest>
