@@ -24,15 +24,15 @@ import android.database.sqlite.SQLiteDatabase;
 import android.database.sqlite.SQLiteOpenHelper;
 import android.net.Uri;
 
-import com.truecaller.actorssampleapplication.FeedContract.Feed;
-import com.truecaller.androidactors.Promise;
-
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 
+import com.truecaller.actorssampleapplication.FeedContract.Feed;
+import com.truecaller.androidactors.Promise;
+
 /* package */ class FeedStorageImpl implements FeedStorage {
 
-    private static final Uri NOTIFICATION_URI = Uri.parse("content://feed/");
+    private static final Uri NOTIFICATION_URI = Uri.parse("content://com.truecaller.actorssampleapplication.FeedContentProvider/feed/");
 
     private final ContentResolver mContentResolver;
 
